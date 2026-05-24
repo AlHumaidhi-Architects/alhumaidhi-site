@@ -53,7 +53,9 @@ export default async function RootLayout({
       style={themeStyle(content.theme)}
       suppressHydrationWarning
     >
-      <body className="antialiased">{children}</body>
+      <body className="antialiased" suppressHydrationWarning>
+        {children}
+      </body>
     </html>
   );
 }

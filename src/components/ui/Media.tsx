@@ -22,8 +22,18 @@ type MediaProps = {
   grayscale?: boolean;
   /** overlay tint strength 0–1 — a soft wash of the page ground over the image */
   tint?: number;
+  /** poster frame for videos */
+  poster?: string;
   children?: React.ReactNode;
 };
+
+/** Distinguish stills from animated GIFs and MP4/WebM video by extension. */
+function mediaKind(src: string): "video" | "gif" | "image" {
+  const s = (src || "").split("?")[0].toLowerCase();
+  if (/\.(mp4|webm|mov|m4v|ogv)$/.test(s)) return "video";
+  if (/\.gif$/.test(s)) return "gif";
+  return "image";
+}
 
 export function Media({
   src,
@@ -37,6 +47,7 @@ export function Media({
   sizes = "100vw",
   grayscale = false,
   tint = 0,
+  poster,
   children,
 }: MediaProps) {
   const ref = useRef<HTMLDivElement>(null);
@@ -45,6 +56,8 @@ export function Media({
     offset: ["start end", "end start"],
   });
   const y = useTransform(scrollYProgress, [0, 1], [parallax, -parallax]);
+  const kind = mediaKind(src);
+  const fitClass = `object-cover ${grayscale ? "grayscale" : ""} ${imgClassName}`;
 
   return (
     <motion.div
@@ -56,30 +69,37 @@ export function Media({
       whileInView={reveal ? "visible" : undefined}
       viewport={inViewSoft}
     >
-      <motion.div
-        className="absolute inset-0 will-change-transform"
-        variants={reveal ? clipInner : undefined}
-      >
+      <motion.div className="absolute inset-0 will-change-transform" variants={reveal ? clipInner : undefined}>
         <motion.div
           className={parallax ? "absolute inset-x-0 -inset-y-[24%]" : "absolute inset-0"}
           style={parallax ? { y } : undefined}
         >
-          <Image
-            src={src}
-            alt={alt}
-            fill
-            priority={priority}
-            sizes={sizes}
-            className={`object-cover ${grayscale ? "grayscale" : ""} ${imgClassName}`}
-          />
+          {kind === "video" ? (
+            <video
+              className={`absolute inset-0 h-full w-full ${fitClass}`}
+              autoPlay
+              loop
+              muted
+              playsInline
+              preload="metadata"
+              poster={poster}
+            >
+              <source src={src} />
+            </video>
+          ) : (
+            <Image
+              src={src}
+              alt={alt}
+              fill
+              priority={priority}
+              sizes={sizes}
+              unoptimized={kind === "gif"}
+              className={fitClass}
+            />
+          )}
         </motion.div>
       </motion.div>
-      {tint > 0 && (
-        <div
-          className="pointer-events-none absolute inset-0 bg-ink"
-          style={{ opacity: tint }}
-        />
-      )}
+      {tint > 0 && <div className="pointer-events-none absolute inset-0 bg-ink" style={{ opacity: tint }} />}
       {children}
     </motion.div>
   );

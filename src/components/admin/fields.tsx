@@ -257,6 +257,100 @@ function StringListField({
   );
 }
 
+function TableField({
+  value,
+  onChange,
+  help,
+}: {
+  value: { columns?: string[]; rows?: string[][] } | undefined;
+  onChange: (v: { columns: string[]; rows: string[][] }) => void;
+  help?: string;
+}) {
+  const columns = Array.isArray(value?.columns) ? (value!.columns as string[]) : [];
+  const rows = Array.isArray(value?.rows) ? (value!.rows as string[][]) : [];
+
+  const commit = (cols: string[], rws: string[][]) => onChange({ columns: cols, rows: rws });
+
+  const setColumn = (ci: number, name: string) =>
+    commit(columns.map((c, i) => (i === ci ? name : c)), rows);
+  const addColumn = () =>
+    commit([...columns, `Column ${columns.length + 1}`], rows.map((r) => [...r, ""]));
+  const removeColumn = (ci: number) =>
+    commit(columns.filter((_, i) => i !== ci), rows.map((r) => r.filter((_, i) => i !== ci)));
+
+  const setCell = (ri: number, ci: number, val: string) =>
+    commit(columns, rows.map((r, i) => (i === ri ? r.map((c, j) => (j === ci ? val : c)) : r)));
+  const addRow = () => commit(columns, [...rows, columns.map(() => "")]);
+  const removeRow = (ri: number) => commit(columns, rows.filter((_, i) => i !== ri));
+  const moveRow = (ri: number, d: number) => {
+    const j = ri + d;
+    if (j < 0 || j >= rows.length) return;
+    const next = rows.map((r) => [...r]);
+    [next[ri], next[j]] = [next[j], next[ri]];
+    commit(columns, next);
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="space-y-2">
+        <span className="block text-[0.72rem] uppercase tracking-[0.16em] text-[#b89b78]">Columns</span>
+        <div className="flex flex-wrap items-center gap-2">
+          {columns.map((col, ci) => (
+            <div key={ci} className="flex items-center gap-1">
+              <input
+                className={`${inputBase} w-32`}
+                value={col ?? ""}
+                onChange={(ev) => setColumn(ci, ev.target.value)}
+              />
+              <IconBtn onClick={() => removeColumn(ci)} title="Remove column" danger disabled={columns.length <= 1}>
+                ✕
+              </IconBtn>
+            </div>
+          ))}
+          <button type="button" onClick={addColumn} className={addBtn}>
+            + Column
+          </button>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <span className="block text-[0.72rem] uppercase tracking-[0.16em] text-[#b89b78]">
+          Rows <span className="text-[#5f5c57]">· {rows.length}</span>
+        </span>
+        {rows.map((row, ri) => (
+          <div key={ri} className="flex items-start gap-2 rounded-md border border-white/10 bg-white/[0.02] p-2">
+            <div
+              className="grid flex-1 gap-2"
+              style={{ gridTemplateColumns: `repeat(${Math.max(1, columns.length)}, minmax(0, 1fr))` }}
+            >
+              {columns.map((_, ci) => (
+                <input
+                  key={ci}
+                  className={inputBase}
+                  value={row[ci] ?? ""}
+                  placeholder={columns[ci]}
+                  onChange={(ev) => setCell(ri, ci, ev.target.value)}
+                />
+              ))}
+            </div>
+            <RowControls
+              onUp={() => moveRow(ri, -1)}
+              onDown={() => moveRow(ri, 1)}
+              onRemove={() => removeRow(ri)}
+              disableUp={ri === 0}
+              disableDown={ri === rows.length - 1}
+            />
+          </div>
+        ))}
+        <button type="button" onClick={addRow} disabled={columns.length === 0} className={addBtn}>
+          + Add row
+        </button>
+      </div>
+      <Help>{help}</Help>
+    </div>
+  );
+}
+
 function singular(label: string) {
   return label.endsWith("s") ? label.slice(0, -1) : label;
 }
@@ -427,6 +521,8 @@ export function FieldView({
       return (
         <ListField field={field} value={value ?? []} onChange={onChange} upload={upload} canUpload={canUpload} />
       );
+    case "table":
+      return <TableField value={value} onChange={onChange} help={field.help} />;
   }
 }
 

@@ -4,19 +4,18 @@ import { Section, SectionTag } from "@/components/ui/Section";
 import { Media } from "@/components/ui/Media";
 import { Reveal } from "@/components/ui/Reveal";
 import { AnimatedText } from "@/components/ui/AnimatedText";
-import { usePresentation } from "@/lib/content-context";
+import { useSections } from "@/lib/content-context";
 
 const PARALLAX = [44, 22, 50, 16, 38, 28, 46, 20];
 
-export function Moodboard() {
-  const presentation = usePresentation();
-  const m = presentation.moodboard;
+export function MoodImages() {
+  const m = useSections().moodImages;
 
   return (
-    <Section id="moodboard" className="overflow-hidden py-28 md:py-44">
+    <Section domId="moodImages" className="overflow-hidden py-28 md:py-44">
       <div className="mx-auto w-full max-w-[1500px] px-6 md:px-12 lg:px-20">
         <div className="flex items-baseline justify-between">
-          <SectionTag id="moodboard" />
+          <SectionTag domId="moodImages" />
           <Reveal as="span" className="hidden font-sans text-[0.62rem] tracking-[0.26em] text-bone-faint md:block">
             {m.images.length} plates
           </Reveal>

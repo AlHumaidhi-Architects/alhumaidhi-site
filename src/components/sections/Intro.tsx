@@ -4,18 +4,17 @@ import { Section, SectionTag } from "@/components/ui/Section";
 import { Media } from "@/components/ui/Media";
 import { Reveal } from "@/components/ui/Reveal";
 import { AnimatedText } from "@/components/ui/AnimatedText";
-import { usePresentation } from "@/lib/content-context";
+import { useInfo, useSections } from "@/lib/content-context";
 
-export function Overview() {
-  const presentation = usePresentation();
-  const o = presentation.overview;
-  const p = presentation.project;
+export function Intro() {
+  const o = useSections().intro;
+  const p = useInfo();
 
   return (
-    <Section id="overview" className="overflow-hidden py-28 md:py-44">
+    <Section domId="intro" className="overflow-hidden py-28 md:py-44">
       <div className="mx-auto w-full max-w-[1500px] px-6 md:px-12 lg:px-20">
         <div className="flex items-baseline justify-between">
-          <SectionTag id="overview" />
+          <SectionTag domId="intro" />
           <Reveal as="span" className="hidden font-sans text-[0.62rem] tracking-[0.26em] text-bone-faint md:block">
             {p.codename}
           </Reveal>
@@ -60,14 +59,12 @@ export function Overview() {
 
       {/* full-bleed image */}
       <figure className="mt-20 md:mt-32">
-        <Media
-          src={o.media.src}
-          alt={o.media.alt}
-          className="h-[78vh] w-full md:h-screen"
-          parallax={80}
-          sizes="100vw"
-        />
-        <Reveal as="figcaption" delay={0.1} className="mx-auto mt-4 flex w-full max-w-[1500px] items-baseline justify-between px-6 md:px-12 lg:px-20">
+        <Media src={o.media.src} alt={o.media.alt} className="h-[78vh] w-full md:h-screen" parallax={80} sizes="100vw" />
+        <Reveal
+          as="figcaption"
+          delay={0.1}
+          className="mx-auto mt-4 flex w-full max-w-[1500px] items-baseline justify-between px-6 md:px-12 lg:px-20"
+        >
           <span className="eyebrow">Fig. 01 — {o.media.alt}</span>
           <span className="eyebrow hidden md:block">{p.location}</span>
         </Reveal>

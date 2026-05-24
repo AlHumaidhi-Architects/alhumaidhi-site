@@ -1,10 +1,10 @@
 "use client";
 
-import type { SectionId } from "@/lib/content";
-import { useNav } from "@/lib/content-context";
+import { useStops } from "@/lib/content-context";
 
 type SectionProps = {
-  id: SectionId;
+  /** DOM id / scroll anchor — must match a stop's domId */
+  domId: string;
   children: React.ReactNode;
   className?: string;
   /** full viewport height min */
@@ -12,13 +12,13 @@ type SectionProps = {
   bg?: "ink" | "ink-2" | "ink-3";
 };
 
-export function Section({ id, children, className = "", full = false, bg = "ink" }: SectionProps) {
-  const nav = useNav();
-  const index = nav.findIndex((n) => n.id === id);
+export function Section({ domId, children, className = "", full = false, bg = "ink" }: SectionProps) {
+  const stops = useStops();
+  const index = stops.findIndex((s) => s.domId === domId);
   const bgClass = bg === "ink-2" ? "bg-ink-2" : bg === "ink-3" ? "bg-ink-3" : "bg-ink";
   return (
     <section
-      id={id}
+      id={domId}
       data-section
       data-section-index={index}
       className={`relative ${bgClass} ${full ? "min-h-screen" : ""} ${className}`}
@@ -28,14 +28,14 @@ export function Section({ id, children, className = "", full = false, bg = "ink"
   );
 }
 
-/** A label shown at the top of editorial sections: "02 — Concept" */
-export function SectionTag({ id, className = "" }: { id: SectionId; className?: string }) {
-  const nav = useNav();
-  const item = nav.find((n) => n.id === id);
-  if (!item) return null;
+/** A label shown at the top of editorial sections: "02 — Site Plot" */
+export function SectionTag({ domId, className = "" }: { domId: string; className?: string }) {
+  const stops = useStops();
+  const stop = stops.find((s) => s.domId === domId);
+  if (!stop) return null;
   return (
     <span className={`eyebrow ${className}`}>
-      {item.index} — {item.label}
+      {stop.index} — {stop.label}
     </span>
   );
 }

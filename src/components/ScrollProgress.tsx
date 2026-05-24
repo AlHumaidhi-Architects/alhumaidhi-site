@@ -2,15 +2,14 @@
 
 import { motion, useScroll, useSpring, AnimatePresence } from "motion/react";
 import { useEffect, useState } from "react";
-import { useNav, useVisibility } from "@/lib/content-context";
+import { useStops } from "@/lib/content-context";
 import { EASE_OUT_EXPO } from "@/lib/motion";
 
 // Floating indices sit over ivory and over full-bleed photographs alike.
 const OVER = "mix-blend-difference text-[#f7f4ec]";
 
 export function ScrollProgress({ introDone }: { introDone: boolean }) {
-  const nav = useNav();
-  const visibility = useVisibility();
+  const stops = useStops();
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, { stiffness: 180, damping: 40, mass: 0.5 });
   const [active, setActive] = useState(0);
@@ -31,9 +30,10 @@ export function ScrollProgress({ introDone }: { introDone: boolean }) {
     );
     sections.forEach((s) => io.observe(s));
     return () => io.disconnect();
-  }, []);
+  }, [stops.length]);
 
-  const current = nav[active] ?? nav[0];
+  const current = stops[active] ?? stops[0];
+  if (!current) return null;
 
   return (
     <>
@@ -52,13 +52,11 @@ export function ScrollProgress({ introDone }: { introDone: boolean }) {
             exit={{ opacity: 0 }}
             transition={{ duration: 1.2, ease: EASE_OUT_EXPO, delay: 0.7 }}
           >
-            <span className="font-sans text-[0.66rem] tabular-nums tracking-[0.2em]">
-              {current.index}
-            </span>
+            <span className="font-sans text-[0.66rem] tabular-nums tracking-[0.2em]">{current.index}</span>
             <span className="h-px w-10 bg-current opacity-50" />
             <AnimatePresence mode="wait">
               <motion.span
-                key={current.id}
+                key={current.domId}
                 className="font-sans text-[0.62rem] uppercase tracking-[0.26em]"
                 initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -83,31 +81,22 @@ export function ScrollProgress({ introDone }: { introDone: boolean }) {
             exit={{ opacity: 0 }}
             transition={{ duration: 1.2, ease: EASE_OUT_EXPO, delay: 0.8 }}
           >
-            {nav
-              .filter((item) => visibility[item.id] !== false)
-              .map((item) => {
-                const i = nav.findIndex((n) => n.id === item.id);
-                return (
-                  <a
-                    key={item.id}
-                    href={`#${item.id}`}
-                    className="group pointer-events-auto flex items-center gap-3"
-                  >
-                    <span
-                      className={`text-[0.6rem] tabular-nums tracking-[0.2em] transition-opacity duration-500 ${
-                        i === active ? "opacity-100" : "opacity-35 group-hover:opacity-70"
-                      }`}
-                    >
-                      {item.index}
-                    </span>
-                    <span
-                      className={`block h-px bg-current transition-all duration-500 ${
-                        i === active ? "w-8 opacity-100" : "w-4 opacity-35 group-hover:w-6 group-hover:opacity-70"
-                      }`}
-                    />
-                  </a>
-                );
-              })}
+            {stops.map((stop, i) => (
+              <a key={stop.domId} href={`#${stop.domId}`} className="group pointer-events-auto flex items-center gap-3">
+                <span
+                  className={`text-[0.6rem] tabular-nums tracking-[0.2em] transition-opacity duration-500 ${
+                    i === active ? "opacity-100" : "opacity-35 group-hover:opacity-70"
+                  }`}
+                >
+                  {stop.index}
+                </span>
+                <span
+                  className={`block h-px bg-current transition-all duration-500 ${
+                    i === active ? "w-8 opacity-100" : "w-4 opacity-35 group-hover:w-6 group-hover:opacity-70"
+                  }`}
+                />
+              </a>
+            ))}
           </motion.nav>
         )}
       </AnimatePresence>

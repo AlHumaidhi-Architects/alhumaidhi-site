@@ -1,30 +1,216 @@
 /**
  * ──────────────────────────────────────────────────────────────────────────
- *  ALHUMAIDHI ARCHITECTS — Presentation content model.
+ *  ALHUMAIDHI ARCHITECTS — Presentation template engine (content model).
  *
- *  This file is the single source of truth for the cinematic presentation.
- *  Duplicate this object, swap the copy + imagery, and you have a brand-new
- *  project deck with identical motion, layout and rhythm.
+ *  This file is the single source of truth for the platform. The shape is a
+ *  small CMS:
+ *
+ *    SiteContent
+ *      ├─ studio       global brand (wordmark, contact, socials)
+ *      ├─ theme        global colour palette
+ *      ├─ projects[]   each a complete, duplicatable presentation
+ *      └─ publishedId  which project the root URL (/) shows
+ *
+ *  Every project follows the same fixed 9-step sequence — Cover, Intro, Site
+ *  Plot, GIF Diagram, Mood Images, Floors, Specifications, Cost Estimate, Next
+ *  Steps — so a project can be cloned in the /admin panel, its copy + imagery
+ *  swapped, and you have a brand-new deck with identical motion and rhythm.
  * ──────────────────────────────────────────────────────────────────────────
  */
+
+export const SCHEMA_VERSION = 2;
+
+/* ── Shared media ───────────────────────────────────────────────────────── */
 
 export type Media = {
   src: string;
   alt: string;
   /** optional aspect ratio hint, "w / h" */
   ratio?: string;
+  /** poster frame shown for videos before playback */
+  poster?: string;
 };
+
+/* ── The fixed section sequence ─────────────────────────────────────────── */
 
 export type SectionId =
   | "cover"
-  | "overview"
-  | "concept"
-  | "moodboard"
-  | "plans"
-  | "renders"
-  | "materials"
-  | "team"
-  | "contact";
+  | "intro"
+  | "sitePlot"
+  | "gifDiagram"
+  | "moodImages"
+  | "floors"
+  | "specifications"
+  | "costEstimate"
+  | "nextSteps";
+
+/** Canonical order of the sequence. Projects may hide or reorder via `sequence`. */
+export const SECTION_ORDER: SectionId[] = [
+  "cover",
+  "intro",
+  "sitePlot",
+  "gifDiagram",
+  "moodImages",
+  "floors",
+  "specifications",
+  "costEstimate",
+  "nextSteps",
+];
+
+export const SECTION_LABELS: Record<SectionId, string> = {
+  cover: "Cover",
+  intro: "Intro",
+  sitePlot: "Site Plot",
+  gifDiagram: "Diagram",
+  moodImages: "Mood Images",
+  floors: "Floors",
+  specifications: "Specifications",
+  costEstimate: "Cost Estimate",
+  nextSteps: "Next Steps",
+};
+
+/** One entry in a project's editable running order. */
+export type SequenceItem = { id: SectionId; label: string; visible: boolean };
+
+/* ── Per-section data shapes ────────────────────────────────────────────── */
+
+export type KV = { k: string; v: string };
+
+export type CoverData = {
+  eyebrow: string;
+  titleLines: string[];
+  summary: string;
+  media: Media;
+  meta: KV[];
+};
+
+export type IntroData = {
+  eyebrow: string;
+  statement: string;
+  body: string[];
+  facts: KV[];
+  media: Media;
+  secondaryMedia: Media;
+};
+
+export type SitePlotData = {
+  eyebrow: string;
+  headline: string;
+  note: string;
+  photo: Media;
+  body: string[];
+  plans: { title: string; caption: string; media: Media }[];
+};
+
+export type GifDiagramData = {
+  eyebrow: string;
+  headline: string;
+  note: string;
+  caption: string;
+  /** an animated GIF, MP4/WebM, or still — rendered full-bleed */
+  media: Media;
+};
+
+export type MoodImagesData = {
+  eyebrow: string;
+  headline: string;
+  note: string;
+  images: Media[];
+};
+
+export type Floor = {
+  code: string;
+  title: string;
+  area: string;
+  /** the design intent / written explanation, one paragraph per entry */
+  intent: string[];
+  plan: Media;
+  /** related mood / reference imagery for this floor */
+  moods: Media[];
+};
+
+export type FloorsData = {
+  eyebrow: string;
+  headline: string;
+  note: string;
+  floors: Floor[];
+};
+
+export type SpecGroup = { title: string; rows: KV[] };
+
+export type SpecificationsData = {
+  eyebrow: string;
+  headline: string;
+  note: string;
+  groups: SpecGroup[];
+};
+
+/** An editable grid — column headers plus rows whose cells align to columns. */
+export type CostTable = {
+  columns: string[];
+  rows: string[][];
+};
+
+export type CostEstimateData = {
+  eyebrow: string;
+  headline: string;
+  note: string;
+  currency: string;
+  table: CostTable;
+  total: KV;
+  footnote: string;
+};
+
+export type NextStep = { n: string; title: string; text: string };
+
+export type NextStepsData = {
+  eyebrow: string;
+  headline: string[];
+  text: string;
+  steps: NextStep[];
+  ctaLabel: string;
+};
+
+export type SectionData = {
+  cover: CoverData;
+  intro: IntroData;
+  sitePlot: SitePlotData;
+  gifDiagram: GifDiagramData;
+  moodImages: MoodImagesData;
+  floors: FloorsData;
+  specifications: SpecificationsData;
+  costEstimate: CostEstimateData;
+  nextSteps: NextStepsData;
+};
+
+/* ── Project ────────────────────────────────────────────────────────────── */
+
+export type ProjectInfo = {
+  codename: string;
+  name: string;
+  subtitle: string;
+  client: string;
+  location: string;
+  typology: string;
+  area: string;
+  year: string;
+  status: string;
+  phase: string;
+  description: string;
+};
+
+export type Project = {
+  id: string;
+  slug: string;
+  /** internal title shown in the admin project list */
+  title: string;
+  published: boolean;
+  info: ProjectInfo;
+  sequence: SequenceItem[];
+  sections: SectionData;
+};
+
+/* ── Global brand + theme ───────────────────────────────────────────────── */
 
 export const studio = {
   name: "Alhumaidhi Architects",
@@ -44,273 +230,7 @@ export const studio = {
   ],
 };
 
-export const nav: { id: SectionId; index: string; label: string }[] = [
-  { id: "cover", index: "01", label: "Cover" },
-  { id: "overview", index: "02", label: "Project Overview" },
-  { id: "concept", index: "03", label: "Concept" },
-  { id: "moodboard", index: "04", label: "Moodboard" },
-  { id: "plans", index: "05", label: "Plans" },
-  { id: "renders", index: "06", label: "Renders" },
-  { id: "materials", index: "07", label: "Materials" },
-  { id: "team", index: "08", label: "Team" },
-  { id: "contact", index: "09", label: "Contact" },
-];
-
-/* Curated architectural imagery (Unsplash, served at runtime). */
-const img = (id: string, w = 1920) =>
-  `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=${w}&q=80`;
-
-export const presentation = {
-  project: {
-    codename: "MAJLIS — DESERT THRESHOLD",
-    name: "Majlis House",
-    subtitle: "A desert residence between courtyard and dune",
-    client: "Private Commission",
-    location: "Sabah Al Salem, Kuwait",
-    typology: "Private Residence",
-    area: "1,240 m²",
-    year: "2024 — 2026",
-    status: "In Design Development",
-    phase: "Concept Presentation · Vol. 01",
-  },
-
-  cover: {
-    media: {
-      src: img("1487958449943-2429e8be8625"),
-      alt: "White concrete architectural facade in raking light",
-    } as Media,
-    eyebrow: "Concept Presentation — Vol. 01",
-    titleLines: ["Majlis", "House"],
-    summary:
-      "A residence shaped by the desert's two gestures — the courtyard that holds shade, and the dune that yields to it.",
-    meta: [
-      { k: "Location", v: "Sabah Al Salem, Kuwait" },
-      { k: "Typology", v: "Private Residence" },
-      { k: "Year", v: "2024 — 2026" },
-      { k: "Status", v: "In Design Development" },
-    ],
-  },
-
-  overview: {
-    eyebrow: "01 — Project Overview",
-    statement:
-      "The brief asked for a house that disappears by day and glows by night. We answered with mass: a single travertine volume carved by a courtyard, so that every room borrows light from a shaded centre rather than the punishing horizon.",
-    body: [
-      "Majlis House sits on a corner plot where the city grid loosens into low dunes. Rather than turn its back on the street, the house presents a long, near-blind wall of board-formed concrete — a threshold, not a barrier — drawing visitors along its length to a single deep-set entrance.",
-      "Inside, the plan inverts: rooms open inward to a planted courtyard and a shallow reflecting pool. The result is a microclimate — three to four degrees cooler than the street — and a sequence of spaces that read as one continuous room folded around water.",
-    ],
-    facts: [
-      { k: "Client", v: "Private Commission" },
-      { k: "Site Area", v: "2,050 m²" },
-      { k: "Built Area", v: "1,240 m²" },
-      { k: "Programme", v: "5 bed · majlis · pool house" },
-      { k: "Sustainability", v: "Passive cooling · greywater reuse" },
-      { k: "Status", v: "Design Development — 2026" },
-    ],
-    media: {
-      src: img("1600585154340-be6161a56a0c"),
-      alt: "Minimal interior with diffused daylight",
-    } as Media,
-    secondaryMedia: {
-      src: img("1600566753086-00f18fb6b3ea"),
-      alt: "Concrete stair detail",
-    } as Media,
-  },
-
-  concept: {
-    eyebrow: "02 — Concept",
-    keyword: "Threshold",
-    headline: ["Between", "courtyard", "and dune"],
-    paragraphs: [
-      "Desert architecture has always negotiated two needs at once: to enclose, and to breathe. Majlis House treats that negotiation as its plan. A heavy outer shell registers the harshness of the site; a soft inner court registers the life within.",
-      "The move is a single carved void. We pulled a courtyard through the centre of the volume and let it lean — wider at the sky, narrower at the ground — so that morning light rakes down one wall and evening light the other, while the noon sun never reaches the floor.",
-    ],
-    principles: [
-      {
-        n: "01",
-        title: "Mass before glass",
-        text: "Thermal mass does the first work of cooling; openings are earned, not assumed.",
-      },
-      {
-        n: "02",
-        title: "One room, folded",
-        text: "Living, dining and majlis are a single volume bent around the water court.",
-      },
-      {
-        n: "03",
-        title: "Borrowed light",
-        text: "Every habitable room takes daylight from the shaded centre, never the bare horizon.",
-      },
-      {
-        n: "04",
-        title: "The long approach",
-        text: "Arrival is choreographed along a blind wall — anticipation, then release.",
-      },
-    ],
-    media: {
-      src: img("1517581177682-a085bb7ffb15"),
-      alt: "Raw concrete wall with directional shadow",
-    } as Media,
-  },
-
-  moodboard: {
-    eyebrow: "03 — Moodboard",
-    headline: "Atmospheres we are chasing",
-    note: "References, not answers — texture, temperature and the quality of shadow we want the house to hold.",
-    images: [
-      { src: img("1531973576160-7125cd663d86", 1200), alt: "Sunlight across a plaster wall", ratio: "3 / 4" },
-      { src: img("1545324418-cc1a3fa10c00", 1200), alt: "Minimal arched corridor", ratio: "3 / 4" },
-      { src: img("1493809842364-78817add7ffb", 1400), alt: "Quiet interior with a single chair", ratio: "4 / 3" },
-      { src: img("1600210492493-0946911123ea", 1200), alt: "Stone bath in soft light", ratio: "3 / 4" },
-      { src: img("1604014237800-1c9102c219da", 1400), alt: "Desert horizon at dusk", ratio: "16 / 10" },
-      { src: img("1502005229762-cf1b2da7c5d6", 1200), alt: "Modern villa courtyard", ratio: "4 / 5" },
-      { src: img("1524758631624-e2822e304c36", 1400), alt: "Travertine surface close up", ratio: "4 / 3" },
-      { src: img("1505691938895-1758d7feb511", 1200), alt: "Light study on a curved wall", ratio: "3 / 4" },
-    ] as Media[],
-  },
-
-  plans: {
-    eyebrow: "04 — Plans",
-    headline: "The plan, level by level",
-    note: "Drawn at 1:200. The courtyard is the constant; everything else negotiates its edge.",
-    levels: [
-      {
-        code: "L0",
-        title: "Ground — Living & Majlis",
-        area: "640 m²",
-        notes: "Entry sequence, majlis, kitchen and living folded around the water court; service spine to the north.",
-        media: { src: img("1503387762-592deb58ef4e", 1600), alt: "Architectural ground floor plan drawing" } as Media,
-      },
-      {
-        code: "L1",
-        title: "First — Private Quarters",
-        area: "420 m²",
-        notes: "Four bedrooms and the principal suite, each with a shaded loggia overlooking the court.",
-        media: { src: img("1582719478250-c89cae4dc85b", 1600), alt: "First floor architectural plan" } as Media,
-      },
-      {
-        code: "RF",
-        title: "Roof — Terrace & Mechanical",
-        area: "180 m²",
-        notes: "Evening terrace, pergola, photovoltaic array and concealed plant screened by a perforated parapet.",
-        media: { src: img("1487014679447-9f8336841d58", 1600), alt: "Roof plan and site diagram" } as Media,
-      },
-      {
-        code: "ST",
-        title: "Site — Approach & Landscape",
-        area: "2,050 m²",
-        notes: "The long blind wall, the gravel forecourt, native planting and the transition from street grid to dune.",
-        media: { src: img("1473773508845-188df298d2d1", 1600), alt: "Site plan with landscape" } as Media,
-      },
-    ],
-  },
-
-  renders: {
-    eyebrow: "05 — Renders",
-    headline: "The house, imagined in light",
-    note: "Working visualisations — materials and planting are indicative of intent.",
-    shots: [
-      {
-        title: "Approach — the blind wall",
-        time: "07:40 · winter morning",
-        text: "Board-formed concrete catches the low sun; the entrance reads only as a shadow until you are upon it.",
-        media: { src: img("1511818966892-d7d671e672a2"), alt: "Concrete residence exterior at sunrise" } as Media,
-      },
-      {
-        title: "The water court",
-        time: "12:10 · midday",
-        text: "The leaning courtyard keeps the floor in shade while the sky burns above the reflecting pool.",
-        media: { src: img("1600607687939-ce8a6c25118c"), alt: "Interior courtyard with reflecting pool" } as Media,
-      },
-      {
-        title: "Majlis at dusk",
-        time: "18:55 · golden hour",
-        text: "The folded living room opens fully to the court; warm interior light begins to read against the cooling concrete.",
-        media: { src: img("1600566753086-00f18fb6b3ea"), alt: "Warm minimal living room at dusk" } as Media,
-      },
-      {
-        title: "Roof terrace",
-        time: "20:30 · blue hour",
-        text: "Above the mass, the city edge and the dune line meet; the parapet frames sky, not street.",
-        media: { src: img("1600585154340-be6161a56a0c"), alt: "Rooftop terrace at blue hour" } as Media,
-      },
-    ],
-  },
-
-  materials: {
-    eyebrow: "06 — Materials",
-    headline: "A palette of weight and warmth",
-    note: "Four materials, used honestly. Nothing applied that could be structural; nothing structural that could be hidden.",
-    palette: [
-      {
-        n: "M01",
-        name: "Board-formed concrete",
-        use: "Outer shell · approach wall",
-        text: "Cast against rough-sawn timber so the wall carries the grain of its making. Left raw, sealed only against dust.",
-        media: { src: img("1565538810643-b5bdb714032a", 1000), alt: "Board-formed concrete texture" } as Media,
-      },
-      {
-        n: "M02",
-        name: "Roman travertine",
-        use: "Courtyard floors · majlis",
-        text: "Vein-cut and honed. A pale, warm ground that reads almost as compacted sand under the courtyard light.",
-        media: { src: img("1524758631624-e2822e304c36", 1000), alt: "Honed travertine stone surface" } as Media,
-      },
-      {
-        n: "M03",
-        name: "Oxidised brass",
-        use: "Door pulls · screens · trim",
-        text: "Allowed to patina. The single warm metal in the house — a glint at the threshold and along the courtyard screens.",
-        media: { src: img("1605792657660-596af9009e82", 1000), alt: "Aged brass metal surface" } as Media,
-      },
-      {
-        n: "M04",
-        name: "Smoked oak",
-        use: "Joinery · ceilings · doors",
-        text: "Fumed to a deep umber. Lines the soffits of the loggias so the underside of the house feels lined, not poured.",
-        media: { src: img("1620641788421-7a1c342ea42e", 1000), alt: "Dark smoked oak wood grain" } as Media,
-      },
-    ],
-  },
-
-  team: {
-    eyebrow: "07 — Team",
-    headline: "The studio behind the house",
-    statement:
-      "Alhumaidhi Architects is a small practice in Kuwait City working at the scale of the room and the region at once. Majlis House is led by a core team of four, with structural and environmental engineering brought in early.",
-    members: [
-      { name: "Yousef Alhumaidhi", role: "Founder · Design Director", since: "Principal in charge" },
-      { name: "Dana Al-Rashid", role: "Project Architect", since: "Plan, section, site" },
-      { name: "Omar Khalil", role: "Associate · Detailing", since: "Materials & construction" },
-      { name: "Layla Mansour", role: "Designer · Visualisation", since: "Renders & light studies" },
-    ],
-    consultants: [
-      { k: "Structure", v: "Werner & Sobek (associate)" },
-      { k: "Environment", v: "Atelier Ten" },
-      { k: "Landscape", v: "Desert Studio, Kuwait" },
-      { k: "Lighting", v: "Light Bureau" },
-    ],
-    media: {
-      src: img("1497366754035-f200968a6e72"),
-      alt: "Architecture studio workspace with models",
-    } as Media,
-  },
-
-  contact: {
-    eyebrow: "08 — Contact",
-    headline: ["Let us build", "something", "that lasts"],
-    text: "For the full design package, fee proposal or a studio visit, reach the team directly. We respond within two working days.",
-  },
-};
-
-export type Presentation = typeof presentation;
-
-/* ──────────────────────────────────────────────────────────────────────────
- *  Editable site model — what the /admin dashboard reads and writes.
- *  `defaultContent` is the built-in fallback shown before anything is saved.
- * ────────────────────────────────────────────────────────────────────────── */
-
-export type NavItem = { id: SectionId; index: string; label: string };
+export type Studio = typeof studio;
 
 export type ThemeColors = {
   ink: string;
@@ -323,10 +243,7 @@ export type ThemeColors = {
   clayDim: string;
 };
 
-export type Visibility = Record<SectionId, boolean>;
-
-/** Editable colour palette — overrides the CSS theme tokens at runtime.
- *  Editorial architecture: warm ivory ground, ink type, colour only in photos. */
+/** Editorial architecture: warm ivory ground, ink type, colour only in photos. */
 export const theme: ThemeColors = {
   ink: "#f4f0e7",
   ink2: "#ece6d8",
@@ -338,31 +255,310 @@ export const theme: ThemeColors = {
   clayDim: "#786c57",
 };
 
-/** Which sections appear on the public site. */
-export const visibility: Visibility = {
-  cover: true,
-  overview: true,
-  concept: true,
-  moodboard: true,
-  plans: true,
-  renders: true,
-  materials: true,
-  team: true,
-  contact: true,
+/* ── Imagery helper ─────────────────────────────────────────────────────── */
+
+/* Curated architectural imagery (Unsplash, served at runtime). */
+const img = (id: string, w = 1920) =>
+  `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=${w}&q=80`;
+
+/* ──────────────────────────────────────────────────────────────────────────
+ *  Default demo project — "Majlis House".
+ *  This is the master template: clone it in /admin to start a new deck.
+ * ────────────────────────────────────────────────────────────────────────── */
+
+function defaultSequence(): SequenceItem[] {
+  return SECTION_ORDER.map((id) => ({ id, label: SECTION_LABELS[id], visible: true }));
+}
+
+const majlis: Project = {
+  id: "majlis-house",
+  slug: "majlis-house",
+  title: "Majlis House",
+  published: true,
+  info: {
+    codename: "MAJLIS — DESERT THRESHOLD",
+    name: "Majlis House",
+    subtitle: "A desert residence between courtyard and dune",
+    client: "Private Commission",
+    location: "Sabah Al Salem, Kuwait",
+    typology: "Private Residence",
+    area: "1,240 m²",
+    year: "2024 — 2026",
+    status: "In Design Development",
+    phase: "Concept Presentation · Vol. 01",
+    description:
+      "A residence shaped by the desert's two gestures — the courtyard that holds shade, and the dune that yields to it.",
+  },
+  sequence: defaultSequence(),
+  sections: {
+    cover: {
+      eyebrow: "Concept Presentation — Vol. 01",
+      titleLines: ["Majlis", "House"],
+      summary:
+        "A residence shaped by the desert's two gestures — the courtyard that holds shade, and the dune that yields to it.",
+      media: {
+        src: img("1487958449943-2429e8be8625"),
+        alt: "White concrete architectural facade in raking light",
+      },
+      meta: [
+        { k: "Location", v: "Sabah Al Salem, Kuwait" },
+        { k: "Typology", v: "Private Residence" },
+        { k: "Year", v: "2024 — 2026" },
+        { k: "Status", v: "In Design Development" },
+      ],
+    },
+
+    intro: {
+      eyebrow: "01 — Intro",
+      statement:
+        "The brief asked for a house that disappears by day and glows by night. We answered with mass: a single travertine volume carved by a courtyard, so that every room borrows light from a shaded centre rather than the punishing horizon.",
+      body: [
+        "Majlis House sits on a corner plot where the city grid loosens into low dunes. Rather than turn its back on the street, the house presents a long, near-blind wall of board-formed concrete — a threshold, not a barrier — drawing visitors along its length to a single deep-set entrance.",
+        "Inside, the plan inverts: rooms open inward to a planted courtyard and a shallow reflecting pool. The result is a microclimate — three to four degrees cooler than the street — and a sequence of spaces that read as one continuous room folded around water.",
+      ],
+      facts: [
+        { k: "Client", v: "Private Commission" },
+        { k: "Site Area", v: "2,050 m²" },
+        { k: "Built Area", v: "1,240 m²" },
+        { k: "Programme", v: "5 bed · majlis · pool house" },
+        { k: "Sustainability", v: "Passive cooling · greywater reuse" },
+        { k: "Status", v: "Design Development — 2026" },
+      ],
+      media: {
+        src: img("1600585154340-be6161a56a0c"),
+        alt: "Minimal interior with diffused daylight",
+      },
+      secondaryMedia: {
+        src: img("1600566753086-00f18fb6b3ea"),
+        alt: "Concrete stair detail",
+      },
+    },
+
+    sitePlot: {
+      eyebrow: "02 — Site Plot",
+      headline: "The plot, and the line we drew across it",
+      note: "The long blind wall, the gravel forecourt and the transition from street grid to open dune.",
+      photo: {
+        src: img("1473773508845-188df298d2d1"),
+        alt: "Aerial view of a desert site at dusk",
+      },
+      body: [
+        "The plot is a corner condition: two streets to the north and east, low dunes opening to the south-west. We anchored the mass to the streets and let the landscape spill from the protected inner court toward the open horizon.",
+        "A single gesture organises the site — a 38-metre wall that registers the harshness of the approach and choreographs arrival along its length to one deep-set threshold.",
+      ],
+      plans: [
+        {
+          title: "Site plan — 1:500",
+          caption: "Approach, forecourt and the line of the blind wall",
+          media: { src: img("1503387762-592deb58ef4e", 1600), alt: "Architectural site plan drawing" },
+        },
+        {
+          title: "Landscape strategy",
+          caption: "Native planting, gravel forecourt and the dune edge",
+          media: { src: img("1487014679447-9f8336841d58", 1600), alt: "Landscape and roof plan diagram" },
+        },
+      ],
+    },
+
+    gifDiagram: {
+      eyebrow: "03 — Diagram",
+      headline: "How the volume is carved",
+      note: "A single move: a courtyard pulled through the centre and leaned toward the sky.",
+      caption: "Massing study — solid to void, dawn to dusk",
+      media: {
+        src: img("1517581177682-a085bb7ffb15"),
+        alt: "Animated massing diagram of the carved courtyard volume",
+      },
+    },
+
+    moodImages: {
+      eyebrow: "04 — Mood Images",
+      headline: "Atmospheres we are chasing",
+      note: "References, not answers — texture, temperature and the quality of shadow we want the house to hold.",
+      images: [
+        { src: img("1531973576160-7125cd663d86", 1200), alt: "Sunlight across a plaster wall", ratio: "3 / 4" },
+        { src: img("1545324418-cc1a3fa10c00", 1200), alt: "Minimal arched corridor", ratio: "3 / 4" },
+        { src: img("1493809842364-78817add7ffb", 1400), alt: "Quiet interior with a single chair", ratio: "4 / 3" },
+        { src: img("1600210492493-0946911123ea", 1200), alt: "Stone bath in soft light", ratio: "3 / 4" },
+        { src: img("1604014237800-1c9102c219da", 1400), alt: "Desert horizon at dusk", ratio: "16 / 10" },
+        { src: img("1502005229762-cf1b2da7c5d6", 1200), alt: "Modern villa courtyard", ratio: "4 / 5" },
+        { src: img("1524758631624-e2822e304c36", 1400), alt: "Travertine surface close up", ratio: "4 / 3" },
+        { src: img("1505691938895-1758d7feb511", 1200), alt: "Light study on a curved wall", ratio: "3 / 4" },
+      ],
+    },
+
+    floors: {
+      eyebrow: "05 — Floors",
+      headline: "The house, level by level",
+      note: "Each level negotiates the courtyard's edge differently. The court is the constant.",
+      floors: [
+        {
+          code: "L0",
+          title: "Ground — Living & Majlis",
+          area: "640 m²",
+          intent: [
+            "The ground floor is a single volume folded around the water court: entry sequence, majlis, kitchen and living read as one continuous room, with the service spine held quietly to the north.",
+            "Every habitable space borrows light from the shaded centre, so the floor stays cool and even while the courtyard sky burns above.",
+          ],
+          plan: { src: img("1503387762-592deb58ef4e", 1600), alt: "Ground floor architectural plan" },
+          moods: [
+            { src: img("1600607687939-ce8a6c25118c", 1200), alt: "Interior courtyard with reflecting pool", ratio: "4 / 3" },
+            { src: img("1600566753086-00f18fb6b3ea", 1000), alt: "Warm minimal living room", ratio: "3 / 4" },
+          ],
+        },
+        {
+          code: "L1",
+          title: "First — Private Quarters",
+          area: "420 m²",
+          intent: [
+            "Four bedrooms and the principal suite ring the upper court, each opening to a shaded loggia that overlooks the water below.",
+            "Deep reveals and a perforated parapet filter the low sun, turning each window into a quiet, framed view rather than a wall of glare.",
+          ],
+          plan: { src: img("1582719478250-c89cae4dc85b", 1600), alt: "First floor architectural plan" },
+          moods: [
+            { src: img("1600210492493-0946911123ea", 1200), alt: "Stone bath in soft light", ratio: "3 / 4" },
+            { src: img("1505691938895-1758d7feb511", 1000), alt: "Light study on a curved wall", ratio: "3 / 4" },
+          ],
+        },
+        {
+          code: "RF",
+          title: "Roof — Terrace & Mechanical",
+          area: "180 m²",
+          intent: [
+            "An evening terrace and pergola crown the mass; the photovoltaic array and concealed plant sit behind a perforated parapet that frames sky, not street.",
+            "Above the house, the city edge and the dune line finally meet.",
+          ],
+          plan: { src: img("1487014679447-9f8336841d58", 1600), alt: "Roof plan and site diagram" },
+          moods: [
+            { src: img("1604014237800-1c9102c219da", 1400), alt: "Rooftop terrace at blue hour", ratio: "16 / 10" },
+          ],
+        },
+      ],
+    },
+
+    specifications: {
+      eyebrow: "06 — Specifications",
+      headline: "Built honestly, of weight and warmth",
+      note: "Four materials used honestly, and the systems that keep the house cool, quiet and self-sufficient.",
+      groups: [
+        {
+          title: "Structure & envelope",
+          rows: [
+            { k: "Primary structure", v: "Reinforced concrete frame & shear walls" },
+            { k: "Outer shell", v: "Board-formed concrete, cast against rough-sawn timber" },
+            { k: "Insulation", v: "120 mm rigid mineral wool, ventilated cavity" },
+            { k: "Glazing", v: "Triple-glazed, low-E, bronze-anodised frames" },
+          ],
+        },
+        {
+          title: "Materials & finishes",
+          rows: [
+            { k: "Courtyard floors", v: "Vein-cut Roman travertine, honed" },
+            { k: "Joinery & ceilings", v: "Fumed smoked oak" },
+            { k: "Ironmongery & screens", v: "Oxidised brass, left to patina" },
+            { k: "Interior walls", v: "Hand-applied lime plaster" },
+          ],
+        },
+        {
+          title: "Environment & services",
+          rows: [
+            { k: "Cooling", v: "Passive courtyard pre-cooling + low-velocity chilled beams" },
+            { k: "Water", v: "Greywater reuse, drip irrigation to native planting" },
+            { k: "Energy", v: "Roof photovoltaic array, 28 kWp" },
+            { k: "Controls", v: "KNX automation, shading & climate scenes" },
+          ],
+        },
+      ],
+    },
+
+    costEstimate: {
+      eyebrow: "07 — Cost Estimate",
+      headline: "Indicative budget",
+      note: "Order-of-magnitude figures for the concept stage. Refined with the QS at design development.",
+      currency: "KWD",
+      table: {
+        columns: ["Item", "Scope", "Area / Qty", "Rate", "Estimate"],
+        rows: [
+          ["01", "Substructure & foundations", "1,240 m²", "180 / m²", "223,200"],
+          ["02", "Concrete superstructure & shell", "1,240 m²", "420 / m²", "520,800"],
+          ["03", "Envelope, glazing & screens", "640 m²", "310 / m²", "198,400"],
+          ["04", "Interior finishes & joinery", "1,240 m²", "260 / m²", "322,400"],
+          ["05", "MEP, cooling & automation", "1 lot", "—", "186,000"],
+          ["06", "Landscape, pool & courtyard", "2,050 m²", "70 / m²", "143,500"],
+          ["07", "Preliminaries & contingency", "12%", "—", "190,800"],
+        ],
+      },
+      total: { k: "Estimated construction cost", v: "1,785,100" },
+      footnote: "Excludes land, professional fees, FF&E and statutory charges. ±15% at concept stage.",
+    },
+
+    nextSteps: {
+      eyebrow: "08 — Next Steps",
+      headline: ["Let us build", "something", "that lasts"],
+      text: "With the concept agreed, we move into design development — resolving the plan, the details and the budget in parallel. For the full design package, fee proposal or a studio visit, reach the team directly.",
+      steps: [
+        { n: "01", title: "Concept sign-off", text: "Confirm the massing, the sequence and the material direction set out in this volume." },
+        { n: "02", title: "Design development", text: "Resolve plans, sections and key details to 1:50, with structure and environment engaged." },
+        { n: "03", title: "Cost & programme", text: "A measured estimate with the quantity surveyor, and a construction programme to completion." },
+        { n: "04", title: "Authority & tender", text: "Municipality submission, then a tender package to selected contractors." },
+      ],
+      ctaLabel: "Start the conversation",
+    },
+  },
 };
 
+/* ──────────────────────────────────────────────────────────────────────────
+ *  Editable site model — what the /admin dashboard reads and writes.
+ *  `defaultContent` is the built-in fallback shown before anything is saved.
+ * ────────────────────────────────────────────────────────────────────────── */
+
 export type SiteContent = {
-  studio: typeof studio;
-  nav: NavItem[];
-  presentation: Presentation;
+  schemaVersion: number;
+  studio: Studio;
   theme: ThemeColors;
-  visibility: Visibility;
+  projects: Project[];
+  publishedId: string;
 };
 
 export const defaultContent: SiteContent = {
+  schemaVersion: SCHEMA_VERSION,
   studio,
-  nav,
-  presentation,
   theme,
-  visibility,
+  projects: [majlis],
+  publishedId: majlis.id,
 };
+
+/* ── Helpers shared by server + client ──────────────────────────────────── */
+
+export function slugify(input: string): string {
+  // NFKD decomposes accented letters; we then keep only [a-z0-9] and collapse
+  // everything else (including combining marks) into single dashes.
+  const lower = input.toLowerCase().normalize("NFKD");
+  let out = "";
+  let prevDash = false;
+  for (const ch of lower) {
+    const code = ch.charCodeAt(0);
+    if (code >= 0x300 && code <= 0x36f) continue; // combining diacritical marks
+    if ((ch >= "a" && ch <= "z") || (ch >= "0" && ch <= "9")) {
+      out += ch;
+      prevDash = false;
+    } else if (!prevDash) {
+      out += "-";
+      prevDash = true;
+    }
+  }
+  return out.replace(/^-+|-+$/g, "").slice(0, 60) || "project";
+}
+
+/** The project the public site shows at `/`, with sensible fallbacks. */
+export function getPublished(content: SiteContent): Project | undefined {
+  return (
+    content.projects.find((p) => p.id === content.publishedId && p.published) ||
+    content.projects.find((p) => p.published) ||
+    content.projects[0]
+  );
+}
+
+export function getBySlug(content: SiteContent, slug: string): Project | undefined {
+  return content.projects.find((p) => p.slug === slug);
+}

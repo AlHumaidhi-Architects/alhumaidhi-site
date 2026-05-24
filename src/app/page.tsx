@@ -1,17 +1,20 @@
+import { notFound } from "next/navigation";
+import { getPublished } from "@/lib/content";
 import { getSiteContent } from "@/lib/get-content";
-import { ContentProvider } from "@/lib/content-context";
-import { AppShell } from "@/components/AppShell";
-import { SectionList } from "@/components/SectionList";
+import { Presentation } from "@/components/Presentation";
+
+export const dynamic = "force-dynamic";
 
 export default async function Page() {
   const content = await getSiteContent();
+  const project = getPublished(content);
+  if (!project) notFound();
   return (
-    <ContentProvider content={content}>
-      <div className="grain">
-        <AppShell>
-          <SectionList />
-        </AppShell>
-      </div>
-    </ContentProvider>
+    <Presentation
+      studio={content.studio}
+      theme={content.theme}
+      project={project}
+      year={new Date().getFullYear()}
+    />
   );
 }

@@ -1,35 +1,75 @@
 "use client";
 
-import { createContext, useContext } from "react";
-import { defaultContent, type SiteContent } from "./content";
+import { createContext, useContext, useMemo } from "react";
+import {
+  defaultContent,
+  getPublished,
+  type Project,
+  type Studio,
+  type ThemeColors,
+} from "./content";
+import { buildStops, type Stop } from "./stops";
 
-const ContentContext = createContext<SiteContent>(defaultContent);
+type PresentationCtx = {
+  studio: Studio;
+  theme: ThemeColors;
+  project: Project;
+  stops: Stop[];
+  /** current year, computed on the server and passed down (hydration-safe) */
+  year: number;
+};
 
-export function ContentProvider({
-  content,
+const fallbackProject = getPublished(defaultContent) as Project;
+
+const PresentationContext = createContext<PresentationCtx>({
+  studio: defaultContent.studio,
+  theme: defaultContent.theme,
+  project: fallbackProject,
+  stops: buildStops(fallbackProject),
+  year: 2025,
+});
+
+export function PresentationProvider({
+  studio,
+  theme,
+  project,
+  year,
   children,
 }: {
-  content: SiteContent;
+  studio: Studio;
+  theme: ThemeColors;
+  project: Project;
+  year: number;
   children: React.ReactNode;
 }) {
-  return <ContentContext.Provider value={content}>{children}</ContentContext.Provider>;
+  const value = useMemo<PresentationCtx>(
+    () => ({ studio, theme, project, stops: buildStops(project), year }),
+    [studio, theme, project, year],
+  );
+  return <PresentationContext.Provider value={value}>{children}</PresentationContext.Provider>;
 }
 
-export function useContent(): SiteContent {
-  return useContext(ContentContext);
+export function usePresentation() {
+  return useContext(PresentationContext);
 }
 export function useStudio() {
-  return useContent().studio;
-}
-export function useNav() {
-  return useContent().nav;
-}
-export function usePresentation() {
-  return useContent().presentation;
-}
-export function useVisibility() {
-  return useContent().visibility;
+  return usePresentation().studio;
 }
 export function useTheme() {
-  return useContent().theme;
+  return usePresentation().theme;
+}
+export function useProject() {
+  return usePresentation().project;
+}
+export function useInfo() {
+  return usePresentation().project.info;
+}
+export function useSections() {
+  return usePresentation().project.sections;
+}
+export function useStops() {
+  return usePresentation().stops;
+}
+export function useYear() {
+  return usePresentation().year;
 }

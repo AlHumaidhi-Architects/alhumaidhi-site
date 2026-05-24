@@ -4,12 +4,15 @@ import Image from "next/image";
 import { motion, useScroll, useTransform } from "motion/react";
 import { useRef } from "react";
 import { Section } from "@/components/ui/Section";
-import { usePresentation } from "@/lib/content-context";
+import { useInfo, useSections } from "@/lib/content-context";
 import { useIntro } from "@/lib/intro";
 import { EASE_OUT_EXPO } from "@/lib/motion";
 
+const isVideo = (src: string) => /\.(mp4|webm|mov|m4v)$/.test((src || "").split("?")[0].toLowerCase());
+
 export function Cover() {
-  const presentation = usePresentation();
+  const c = useSections().cover;
+  const p = useInfo();
   const { introDone } = useIntro();
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
@@ -23,9 +26,6 @@ export function Cover() {
   const fgY = useTransform(scrollYProgress, [0, 1], ["0%", "-12%"]);
   const fgOpacity = useTransform(scrollYProgress, [0, 0.85], [1, 0]);
 
-  const c = presentation.cover;
-  const p = presentation.project;
-
   const fade = (delay: number) => ({
     initial: { opacity: 0, y: 18 } as const,
     animate: introDone ? { opacity: 1, y: 0 } : { opacity: 0, y: 18 },
@@ -33,9 +33,9 @@ export function Cover() {
   });
 
   return (
-    <Section id="cover" full className="overflow-hidden">
+    <Section domId="cover" full className="overflow-hidden">
       <div ref={ref} className="relative h-screen w-full">
-        {/* ── Full-bleed photograph ── */}
+        {/* ── Full-bleed media ── */}
         <motion.div className="absolute inset-0" style={{ y: imgY }}>
           <motion.div className="absolute -inset-[8%]" style={{ scale: imgScale }}>
             <motion.div
@@ -44,14 +44,20 @@ export function Cover() {
               animate={introDone ? { scale: 1 } : { scale: 1.18 }}
               transition={{ duration: 3.2, ease: EASE_OUT_EXPO }}
             >
-              <Image
-                src={c.media.src}
-                alt={c.media.alt}
-                fill
-                priority
-                sizes="100vw"
-                className="object-cover"
-              />
+              {isVideo(c.media.src) ? (
+                <video
+                  className="absolute inset-0 h-full w-full object-cover"
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  poster={c.media.poster}
+                >
+                  <source src={c.media.src} />
+                </video>
+              ) : (
+                <Image src={c.media.src} alt={c.media.alt} fill priority sizes="100vw" className="object-cover" />
+              )}
             </motion.div>
           </motion.div>
         </motion.div>
@@ -70,7 +76,9 @@ export function Cover() {
 
           <div className="mt-5 flex flex-wrap items-end justify-between gap-x-12 gap-y-6">
             <h1 className="display max-w-[14ch] text-[clamp(3rem,11vw,9.5rem)] leading-[0.95]">
-              <motion.span {...fade(0.35)} className="block">{c.titleLines[0]}</motion.span>
+              <motion.span {...fade(0.35)} className="block">
+                {c.titleLines[0]}
+              </motion.span>
               {c.titleLines[1] && (
                 <motion.span {...fade(0.48)} className="display-italic block opacity-90">
                   {c.titleLines[1]}

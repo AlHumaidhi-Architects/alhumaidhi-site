@@ -3,7 +3,7 @@
 import { AnimatePresence, motion } from "motion/react";
 import { useLenis } from "lenis/react";
 import { useEffect, useState } from "react";
-import { useNav, usePresentation, useStudio, useVisibility } from "@/lib/content-context";
+import { useInfo, useStops, useStudio } from "@/lib/content-context";
 import { EASE_IN_OUT_QUINT, EASE_OUT_EXPO } from "@/lib/motion";
 
 const menuVariants = {
@@ -35,10 +35,9 @@ const fadeChild = {
 const OVER = "mix-blend-difference text-[#f7f4ec]";
 
 export function Navigation({ introDone }: { introDone: boolean }) {
-  const nav = useNav();
+  const stops = useStops();
   const studio = useStudio();
-  const presentation = usePresentation();
-  const visibility = useVisibility();
+  const info = useInfo();
   const [open, setOpen] = useState(false);
   const lenis = useLenis();
 
@@ -53,11 +52,11 @@ export function Navigation({ introDone }: { introDone: boolean }) {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  const goTo = (id: string) => {
+  const goTo = (domId: string) => {
     setOpen(false);
     window.setTimeout(() => {
-      if (lenis) lenis.scrollTo(`#${id}`, { offset: 0, duration: 2 });
-      else document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+      if (lenis) lenis.scrollTo(`#${domId}`, { offset: 0, duration: 2 });
+      else document.getElementById(domId)?.scrollIntoView({ behavior: "smooth" });
     }, 640);
   };
 
@@ -88,7 +87,7 @@ export function Navigation({ introDone }: { introDone: boolean }) {
               </button>
 
               <span className="hidden font-sans text-[0.62rem] tracking-[0.28em] opacity-60 md:block">
-                {presentation.project.phase.toUpperCase()}
+                {info.phase.toUpperCase()}
               </span>
 
               <button
@@ -131,24 +130,24 @@ export function Navigation({ introDone }: { introDone: boolean }) {
             {/* spacer for header */}
             <div className="h-[92px] shrink-0 md:h-[112px]" />
 
-            <div className="flex flex-1 flex-col justify-center px-6 md:px-12 lg:px-20">
+            <div className="flex flex-1 flex-col justify-center overflow-y-auto px-6 md:px-12 lg:px-20">
               <motion.span variants={fadeChild} className="eyebrow mb-10 md:mb-14">
-                Index — {presentation.project.codename}
+                Index — {info.codename}
               </motion.span>
 
               <nav className="flex flex-col">
-                {nav.filter((item) => visibility[item.id] !== false).map((item) => (
-                  <div key={item.id} className="overflow-hidden border-t border-line last:border-b">
+                {stops.map((stop) => (
+                  <div key={stop.domId} className="overflow-hidden border-t border-line last:border-b">
                     <motion.button
                       variants={itemVariants}
-                      onClick={() => goTo(item.id)}
-                      className="group flex w-full items-baseline gap-6 py-3.5 text-left md:gap-10 md:py-5"
+                      onClick={() => goTo(stop.domId)}
+                      className="group flex w-full items-baseline gap-6 py-3 text-left md:gap-10 md:py-4"
                     >
                       <span className="font-sans text-[0.62rem] tabular-nums tracking-[0.3em] text-bone-faint transition-colors group-hover:text-bone md:text-[0.68rem]">
-                        {item.index}
+                        {stop.index}
                       </span>
-                      <span className="display text-[clamp(2.2rem,7.5vw,5.2rem)] text-bone-dim transition-all duration-700 group-hover:translate-x-3 group-hover:text-bone">
-                        {item.label}
+                      <span className="display text-[clamp(1.9rem,6.5vw,4.6rem)] text-bone-dim transition-all duration-700 group-hover:translate-x-3 group-hover:text-bone">
+                        {stop.label}
                       </span>
                       <span className="ml-auto hidden h-px w-0 self-center bg-bone transition-all duration-700 group-hover:w-16 md:block" />
                     </motion.button>
@@ -163,10 +162,7 @@ export function Navigation({ introDone }: { introDone: boolean }) {
             >
               <div className="flex flex-col gap-1.5">
                 <span className="eyebrow">Studio</span>
-                <a
-                  href={`mailto:${studio.email}`}
-                  className="font-sans text-sm text-bone transition-opacity hover:opacity-60"
-                >
+                <a href={`mailto:${studio.email}`} className="font-sans text-sm text-bone transition-opacity hover:opacity-60">
                   {studio.email}
                 </a>
                 <span className="font-sans text-sm text-bone-dim">{studio.phone}</span>
