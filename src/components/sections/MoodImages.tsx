@@ -38,10 +38,11 @@ export function MoodImages() {
           </div>
         </div>
 
-        {/* an unhurried editorial collage — two columns, generous air, captions beneath */}
-        <div className="mt-16 columns-1 gap-8 md:mt-28 md:columns-2 md:gap-16">
+        {/* an unhurried editorial collage — two-column grid (reliable height for
+            absolutely-filled media, unlike CSS multi-column), generous air */}
+        <div className="mt-16 grid grid-cols-1 items-start gap-x-8 gap-y-10 md:mt-28 md:grid-cols-2 md:gap-x-16 md:gap-y-16">
           {m.images.map((image, i) => (
-            <figure key={i} className="mb-8 break-inside-avoid md:mb-16">
+            <figure key={i}>
               <Media
                 src={image.src}
                 alt={image.alt}
