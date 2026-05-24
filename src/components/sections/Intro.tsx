@@ -10,6 +10,15 @@ export function Intro() {
   const o = useSections().intro;
   const p = useInfo();
 
+  // Flexible gallery: first item is full-bleed, the rest flow as inset figures.
+  // Fall back to the legacy single slots for any not-yet-migrated content.
+  const gallery = (
+    Array.isArray(o.gallery) && o.gallery.length > 0
+      ? o.gallery
+      : [o.media, o.secondaryMedia].filter((m): m is NonNullable<typeof m> => !!m?.src)
+  ).filter((m) => m?.src);
+  const [lead, ...rest] = gallery;
+
   return (
     <Section domId="intro" className="overflow-hidden py-28 md:py-44">
       <div className="mx-auto w-full max-w-[1500px] px-6 md:px-12 lg:px-20">
@@ -57,18 +66,27 @@ export function Intro() {
         </div>
       </div>
 
-      {/* full-bleed image */}
-      <figure className="mt-20 md:mt-32">
-        <Media src={o.media.src} alt={o.media.alt} className="h-[78vh] w-full md:h-screen" parallax={80} sizes="100vw" />
-        <Reveal
-          as="figcaption"
-          delay={0.1}
-          className="mx-auto mt-4 flex w-full max-w-[1500px] items-baseline justify-between px-6 md:px-12 lg:px-20"
-        >
-          <span className="eyebrow">Fig. 01 — {o.media.alt}</span>
-          <span className="eyebrow hidden md:block">{p.location}</span>
-        </Reveal>
-      </figure>
+      {/* lead image — full-bleed */}
+      {lead && (
+        <figure className="mt-20 md:mt-32">
+          <Media
+            src={lead.src}
+            alt={lead.alt}
+            poster={lead.poster}
+            className="h-[78vh] w-full md:h-screen"
+            parallax={80}
+            sizes="100vw"
+          />
+          <Reveal
+            as="figcaption"
+            delay={0.1}
+            className="mx-auto mt-4 flex w-full max-w-[1500px] items-baseline justify-between px-6 md:px-12 lg:px-20"
+          >
+            <span className="eyebrow">Fig. 01 — {lead.alt}</span>
+            <span className="eyebrow hidden md:block">{p.location}</span>
+          </Reveal>
+        </figure>
+      )}
 
       {/* body — a single, generously set column */}
       <div className="mx-auto mt-20 w-full max-w-[1500px] px-6 md:mt-32 md:px-12 lg:px-20">
@@ -99,19 +117,25 @@ export function Intro() {
           </div>
         </div>
 
-        {/* secondary image, set in from the margin */}
-        <div className="mt-20 md:mt-28 md:pl-[33%]">
-          <Media
-            src={o.secondaryMedia.src}
-            alt={o.secondaryMedia.alt}
-            className="aspect-[4/5] w-full"
-            parallax={50}
-            sizes="(max-width: 768px) 100vw, 50vw"
-          />
-          <Reveal delay={0.1} className="mt-4">
-            <span className="eyebrow">Fig. 02 — {o.secondaryMedia.alt}</span>
-          </Reveal>
-        </div>
+        {/* remaining images — set in from the margin, one after another */}
+        {rest.map((item, i) => (
+          <div key={i} className="mt-20 md:mt-28 md:pl-[33%]">
+            <Media
+              src={item.src}
+              alt={item.alt}
+              poster={item.poster}
+              className="w-full"
+              style={{ aspectRatio: item.ratio ?? "4 / 5" }}
+              parallax={50}
+              sizes="(max-width: 768px) 100vw, 50vw"
+            />
+            <Reveal delay={0.1} className="mt-4">
+              <span className="eyebrow">
+                Fig. {String(i + 2).padStart(2, "0")} — {item.alt}
+              </span>
+            </Reveal>
+          </div>
+        ))}
       </div>
     </Section>
   );

@@ -46,6 +46,26 @@ const mediaGroup = (label: string, opts: { ratio?: boolean; poster?: boolean } =
     ...(opts.poster ? [e("poster", img("Poster frame", "Shown before a video plays — optional"))] : []),
   ]);
 
+/**
+ * A reusable flexible media gallery — add / remove / reorder image or video
+ * blocks, each editable with upload, paste-URL, description (alt) and aspect
+ * ratio. Used anywhere a section holds a repeated set of images/videos.
+ */
+const mediaListField = (
+  label: string,
+  opts: { addLabel?: string; help?: string; poster?: boolean } = {},
+): Field =>
+  list(
+    label,
+    [
+      e("src", img()),
+      altField,
+      e("ratio", t("Aspect ratio", 'e.g. "3 / 4" or "16 / 10" — controls the shape (optional)')),
+      ...(opts.poster ? [e("poster", img("Poster frame", "Shown before a video plays — optional"))] : []),
+    ],
+    { titleKey: "alt", addLabel: opts.addLabel ?? "Add image / video", help: opts.help },
+  );
+
 /* ── Per-section schemas (keyed by SectionId) ── */
 export const sectionSchemas: Record<SectionId, GroupField> = {
   cover: grp(undefined, [
@@ -60,8 +80,13 @@ export const sectionSchemas: Record<SectionId, GroupField> = {
     e("statement", ta("Lead statement", "The large opening sentence", 4)),
     e("body", sl("Body paragraphs", "Each entry is its own paragraph", "Paragraph")),
     e("facts", list('"At a glance" facts', [e("k", t("Label")), e("v", t("Value"))], { titleKey: "k", addLabel: "Add fact" })),
-    e("media", mediaGroup("Main image")),
-    e("secondaryMedia", mediaGroup("Secondary image")),
+    e(
+      "gallery",
+      mediaListField("Images & video", {
+        addLabel: "Add image / video",
+        help: "The first item shows large and full-bleed; the rest flow down the page as inset figures. Add, remove or reorder as many as you like — each can be an upload or a pasted URL.",
+      }),
+    ),
   ]),
   sitePlot: grp(undefined, [
     e("eyebrow", t("Eyebrow")),
@@ -82,7 +107,7 @@ export const sectionSchemas: Record<SectionId, GroupField> = {
     e("eyebrow", t("Eyebrow")),
     e("headline", t("Headline")),
     e("note", ta("Note")),
-    e("images", list("Reference images", [e("src", img()), altField, e("ratio", t("Aspect ratio", 'e.g. "3 / 4"'))], { titleKey: "alt", addLabel: "Add image" })),
+    e("images", mediaListField("Reference images", { addLabel: "Add image" })),
   ]),
   floors: grp(undefined, [
     e("eyebrow", t("Eyebrow")),
@@ -98,7 +123,7 @@ export const sectionSchemas: Record<SectionId, GroupField> = {
           e("area", t("Area", "e.g. 640 m²")),
           e("intent", sl("Design intent", "The written explanation — one paragraph per entry", "Paragraph")),
           e("plan", mediaGroup("Floor plan")),
-          e("moods", list("Reference images", [e("src", img()), altField, e("ratio", t("Aspect ratio", 'e.g. "3 / 4"'))], { titleKey: "alt", addLabel: "Add image" })),
+          e("moods", mediaListField("Reference images", { addLabel: "Add image" })),
         ],
         { titleKey: "title", addLabel: "Add floor" },
       ),

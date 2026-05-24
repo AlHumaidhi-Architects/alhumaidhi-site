@@ -4,12 +4,12 @@ import Image from "next/image";
 import { motion, useScroll, useTransform } from "motion/react";
 import { useRef } from "react";
 import { Section } from "@/components/ui/Section";
-import { isSupabasePublicUrl } from "@/components/ui/Media";
+import { isSupabasePublicUrl, videoMime } from "@/components/ui/Media";
 import { useInfo, useSections } from "@/lib/content-context";
 import { useIntro } from "@/lib/intro";
 import { EASE_OUT_EXPO } from "@/lib/motion";
 
-const isVideo = (src: string) => /\.(mp4|webm|mov|m4v)$/.test((src || "").split("?")[0].toLowerCase());
+const isVideo = (src: string) => /\.(mp4|webm|mov|m4v|ogv)$/.test((src || "").split("?")[0].toLowerCase());
 
 export function Cover() {
   const c = useSections().cover;
@@ -54,7 +54,7 @@ export function Cover() {
                   playsInline
                   poster={c.media.poster}
                 >
-                  <source src={c.media.src} />
+                  <source src={c.media.src} type={videoMime(c.media.src)} />
                 </video>
               ) : (
                 <Image

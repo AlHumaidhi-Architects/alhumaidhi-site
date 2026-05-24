@@ -35,6 +35,16 @@ function mediaKind(src: string): "video" | "gif" | "image" {
   return "image";
 }
 
+/** Best-effort MIME hint for a <source>, so browsers don't have to sniff. */
+export function videoMime(src: string): string | undefined {
+  const s = (src || "").split("?")[0].toLowerCase();
+  if (s.endsWith(".webm")) return "video/webm";
+  if (s.endsWith(".ogv")) return "video/ogg";
+  if (s.endsWith(".mov") || s.endsWith(".m4v")) return "video/quicktime";
+  if (s.endsWith(".mp4")) return "video/mp4";
+  return undefined; // unknown extension (e.g. a CDN URL) — let the browser sniff
+}
+
 /** Supabase Storage public URL — serve these raw (the optimizer can blank them). */
 export function isSupabasePublicUrl(src: string): boolean {
   return /\/storage\/v1\/object\/public\//.test(src || "");
@@ -89,7 +99,7 @@ export function Media({
               preload="metadata"
               poster={poster}
             >
-              <source src={src} />
+              <source src={src} type={videoMime(src)} />
             </video>
           ) : (
             <Image

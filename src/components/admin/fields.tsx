@@ -5,7 +5,21 @@ import { useRef, useState } from "react";
 import type { Field, FieldEntry } from "@/lib/admin-schema";
 import { blankValue } from "@/lib/admin-schema";
 
-export type UploadFn = (file: File) => Promise<string>;
+/** Resolves to the stored URL, plus an optional non-fatal warning to surface. */
+export type UploadResult = { url: string; warning?: string };
+export type UploadFn = (file: File) => Promise<UploadResult>;
+
+/* Formats the presentation can render. Kept in sync with the upload route
+ * (src/app/api/admin/upload/route.ts) and the renderer (ui/Media.tsx). */
+const ACCEPT_ATTR = "image/jpeg,image/png,image/webp,image/gif,image/avif,video/mp4,video/webm,video/quicktime";
+const SUPPORTED_EXT = /\.(jpe?g|png|webp|gif|avif|mp4|webm|mov|m4v)$/i;
+const SUPPORTED_MIME = /^(image\/(jpeg|png|webp|gif|avif)|video\/(mp4|webm|quicktime))$/i;
+
+/** Client-side guard mirroring the server so users get instant feedback. */
+function isSupportedClientFile(file: File): boolean {
+  if (file.type && SUPPORTED_MIME.test(file.type)) return true;
+  return SUPPORTED_EXT.test(file.name);
+}
 
 export const inputBase =
   "w-full rounded-md border border-white/10 bg-black/30 px-3 py-2 text-sm text-[#e8e4db] placeholder:text-[#5f5c57] outline-none transition focus:border-[#b89b78]";
@@ -146,6 +160,7 @@ function ImageField({
 }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [warn, setWarn] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const url = typeof value === "string" ? value : "";
 
@@ -153,11 +168,18 @@ function ImageField({
     const file = ev.target.files?.[0];
     ev.target.value = "";
     if (!file) return;
-    setBusy(true);
     setErr(null);
+    setWarn(null);
+    if (!isSupportedClientFile(file)) {
+      setErr(`Unsupported file type${file.type ? ` (${file.type})` : ""}. Use JPG, PNG, WEBP, GIF, or MP4 / WEBM / MOV.`);
+      return;
+    }
+    setBusy(true);
     try {
-      const next = await upload(file);
+      const { url: next, warning } = await upload(file);
+      if (!next) throw new Error("File uploaded but no URL was returned.");
       onChange(next);
+      if (warning) setWarn(warning);
     } catch (ex: any) {
       setErr(ex?.message || "Upload failed.");
     } finally {
@@ -213,11 +235,12 @@ function ImageField({
       <input
         ref={inputRef}
         type="file"
-        accept="image/*,video/mp4,video/webm,video/quicktime"
+        accept={ACCEPT_ATTR}
         className="hidden"
         onChange={onFile}
       />
       {err && <p className="mt-1 text-[0.72rem] text-red-300">{err}</p>}
+      {warn && <p className="mt-1 text-[0.72rem] text-amber-300">{warn}</p>}
       <Help>{help}</Help>
     </div>
   );

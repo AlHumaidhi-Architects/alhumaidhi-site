@@ -89,8 +89,13 @@ export type IntroData = {
   statement: string;
   body: string[];
   facts: KV[];
-  media: Media;
-  secondaryMedia: Media;
+  /** Flexible image/video gallery: the first item renders full-bleed, the rest
+   *  flow as inset figures. Add / remove / reorder freely in /admin. */
+  gallery: Media[];
+  /** @deprecated legacy single slots — migrated into `gallery` at read time. */
+  media?: Media;
+  /** @deprecated legacy single slots — migrated into `gallery` at read time. */
+  secondaryMedia?: Media;
 };
 
 export type SitePlotData = {
@@ -345,14 +350,10 @@ const majlis: Project = {
         { k: "Sustainability", v: "Passive cooling · greywater reuse" },
         { k: "Status", v: "Design Development — 2026" },
       ],
-      media: {
-        src: img("1600585154340-be6161a56a0c"),
-        alt: "Minimal interior with diffused daylight",
-      },
-      secondaryMedia: {
-        src: img("1600566753086-00f18fb6b3ea"),
-        alt: "Concrete stair detail",
-      },
+      gallery: [
+        { src: img("1600585154340-be6161a56a0c"), alt: "Minimal interior with diffused daylight" },
+        { src: img("1600566753086-00f18fb6b3ea"), alt: "Concrete stair detail", ratio: "4 / 5" },
+      ],
     },
 
     sitePlot: {

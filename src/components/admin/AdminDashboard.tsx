@@ -117,7 +117,8 @@ export function AdminDashboard({
     const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data?.error || "Upload failed.");
-    return data.url as string;
+    if (!data?.url) throw new Error("File uploaded but no URL was returned.");
+    return { url: data.url as string, warning: data.warning as string | undefined };
   }, []);
 
   /* ── content mutators ── */
@@ -239,7 +240,14 @@ export function AdminDashboard({
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || "Couldn't save.");
       setSavedSnapshot(structuredClone(content));
-      setMessage({ kind: "ok", text: "Saved — your changes are live on the site." });
+      // Tell the editor exactly where the change is (and isn't) visible.
+      const isHome = content.publishedId === activeProject.id;
+      const text = isHome
+        ? `Saved — live now at / and /p/${activeProject.slug}.`
+        : activeProject.published
+          ? `Saved — live at /p/${activeProject.slug}. This isn't the homepage, so / still shows the homepage project.`
+          : `Saved as a draft — preview at /p/${activeProject.slug}. Publish it and “Set as homepage” to show it at /.`;
+      setMessage({ kind: "ok", text });
       router.refresh();
     } catch (ex: any) {
       setMessage({ kind: "err", text: ex?.message || "Couldn't save." });

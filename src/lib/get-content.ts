@@ -65,6 +65,34 @@ function upgradeRetiredSections(project: Project): Project {
   return next === sections ? project : { ...project, sections: next };
 }
 
+/* ── Migrate the Intro's old single media slots into the flexible gallery ──
+ *  Older decks stored `intro.media` + `intro.secondaryMedia`. The Intro now
+ *  reads `intro.gallery`. When a deck has no (non-empty) gallery yet, build one
+ *  from the legacy slots so their images keep showing. Sticks once re-saved. */
+function isMedia(v: unknown): v is { src?: string } {
+  return typeof v === "object" && v !== null;
+}
+
+function upgradeIntroGallery(project: Project): Project {
+  const intro = project.sections?.intro;
+  if (!intro) return project;
+  const hasGallery = Array.isArray(intro.gallery) && intro.gallery.length > 0;
+  if (hasGallery) return project;
+
+  const gallery = [intro.media, intro.secondaryMedia]
+    .filter((m): m is NonNullable<typeof m> => isMedia(m) && typeof m.src === "string" && m.src.length > 0)
+    .map((m) => ({ ...m }));
+
+  return {
+    ...project,
+    sections: { ...project.sections, intro: { ...intro, gallery } },
+  };
+}
+
+function upgradeProject(project: Project): Project {
+  return upgradeIntroGallery(upgradeRetiredSections(project));
+}
+
 /**
  * Reconcile saved data into a valid `SiteContent`.
  *
@@ -84,7 +112,7 @@ function reconcile(saved: unknown): SiteContent {
       schemaVersion: SCHEMA_VERSION,
       studio: deepMerge(defaultContent.studio, saved.studio),
       theme: deepMerge(defaultContent.theme, saved.theme),
-      projects: (saved.projects as Project[]).map(upgradeRetiredSections),
+      projects: (saved.projects as Project[]).map(upgradeProject),
       publishedId:
         typeof saved.publishedId === "string" ? saved.publishedId : defaultContent.publishedId,
     };
