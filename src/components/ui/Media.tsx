@@ -57,6 +57,13 @@ export function Media({
   const url = bustCache(src, version);
   const posterUrl = poster ? bustCache(poster, version) : undefined;
   const kind = mediaKind(url);
+  const uploaded = isSupabasePublicUrl(url);
+  // Our own uploaded files take the reliable path: a plain, always-visible
+  // <img>/<video> with NO clip-path reveal (which can leave media hidden if its
+  // in-view trigger never fires) and NO image optimizer (which can blank a
+  // remote file). The cinematic clip-reveal + next/image is kept only for the
+  // built-in stock/demo imagery, which is never uploaded.
+  const useReveal = reveal && !uploaded;
   const fitClass = `object-cover ${grayscale ? "grayscale" : ""} ${imgClassName}`;
 
   return (
@@ -64,12 +71,12 @@ export function Media({
       ref={ref}
       style={style}
       className={`relative overflow-hidden bg-ink-3 ${className}`}
-      variants={reveal ? clipWrap : undefined}
-      initial={reveal ? "hidden" : false}
-      whileInView={reveal ? "visible" : undefined}
-      viewport={inViewSoft}
+      variants={useReveal ? clipWrap : undefined}
+      initial={useReveal ? "hidden" : false}
+      whileInView={useReveal ? "visible" : undefined}
+      viewport={useReveal ? inViewSoft : undefined}
     >
-      <motion.div className="absolute inset-0 will-change-transform" variants={reveal ? clipInner : undefined}>
+      <motion.div className="absolute inset-0 will-change-transform" variants={useReveal ? clipInner : undefined}>
         <motion.div
           className={parallax ? "absolute inset-x-0 -inset-y-[24%]" : "absolute inset-0"}
           style={parallax ? { y } : undefined}
@@ -86,6 +93,16 @@ export function Media({
             >
               <source src={url} type={videoMime(url)} />
             </video>
+          ) : uploaded ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={url}
+              alt={alt}
+              className={`absolute inset-0 h-full w-full ${fitClass}`}
+              loading={priority ? "eager" : "lazy"}
+              decoding="async"
+              draggable={false}
+            />
           ) : (
             <Image
               src={url}
@@ -93,7 +110,7 @@ export function Media({
               fill
               priority={priority}
               sizes={sizes}
-              unoptimized={kind === "gif" || isSupabasePublicUrl(url)}
+              unoptimized={kind === "gif"}
               className={fitClass}
             />
           )}
