@@ -4,6 +4,10 @@ import Image from "next/image";
 import { motion, useScroll, useTransform } from "motion/react";
 import { useRef } from "react";
 import { clipInner, clipWrap, inViewSoft } from "@/lib/motion";
+import { bustCache, isSupabasePublicUrl, mediaKind, videoMime } from "@/lib/media-url";
+import { useMediaVersion } from "@/lib/content-context";
+
+export { isSupabasePublicUrl, videoMime } from "@/lib/media-url";
 
 type MediaProps = {
   src: string;
@@ -27,29 +31,6 @@ type MediaProps = {
   children?: React.ReactNode;
 };
 
-/** Distinguish stills from animated GIFs and MP4/WebM video by extension. */
-function mediaKind(src: string): "video" | "gif" | "image" {
-  const s = (src || "").split("?")[0].toLowerCase();
-  if (/\.(mp4|webm|mov|m4v|ogv)$/.test(s)) return "video";
-  if (/\.gif$/.test(s)) return "gif";
-  return "image";
-}
-
-/** Best-effort MIME hint for a <source>, so browsers don't have to sniff. */
-export function videoMime(src: string): string | undefined {
-  const s = (src || "").split("?")[0].toLowerCase();
-  if (s.endsWith(".webm")) return "video/webm";
-  if (s.endsWith(".ogv")) return "video/ogg";
-  if (s.endsWith(".mov") || s.endsWith(".m4v")) return "video/quicktime";
-  if (s.endsWith(".mp4")) return "video/mp4";
-  return undefined; // unknown extension (e.g. a CDN URL) — let the browser sniff
-}
-
-/** Supabase Storage public URL — serve these raw (the optimizer can blank them). */
-export function isSupabasePublicUrl(src: string): boolean {
-  return /\/storage\/v1\/object\/public\//.test(src || "");
-}
-
 export function Media({
   src,
   alt,
@@ -71,7 +52,11 @@ export function Media({
     offset: ["start end", "end start"],
   });
   const y = useTransform(scrollYProgress, [0, 1], [parallax, -parallax]);
-  const kind = mediaKind(src);
+  // Cache-bust uploaded media so a re-saved project always serves a fresh copy.
+  const version = useMediaVersion();
+  const url = bustCache(src, version);
+  const posterUrl = poster ? bustCache(poster, version) : undefined;
+  const kind = mediaKind(url);
   const fitClass = `object-cover ${grayscale ? "grayscale" : ""} ${imgClassName}`;
 
   return (
@@ -97,18 +82,18 @@ export function Media({
               muted
               playsInline
               preload="metadata"
-              poster={poster}
+              poster={posterUrl}
             >
-              <source src={src} type={videoMime(src)} />
+              <source src={url} type={videoMime(url)} />
             </video>
           ) : (
             <Image
-              src={src}
+              src={url}
               alt={alt}
               fill
               priority={priority}
               sizes={sizes}
-              unoptimized={kind === "gif" || isSupabasePublicUrl(src)}
+              unoptimized={kind === "gif" || isSupabasePublicUrl(url)}
               className={fitClass}
             />
           )}

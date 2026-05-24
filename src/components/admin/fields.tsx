@@ -4,6 +4,7 @@
 import { useRef, useState } from "react";
 import type { Field, FieldEntry } from "@/lib/admin-schema";
 import { blankValue } from "@/lib/admin-schema";
+import { bustCache } from "@/lib/media-url";
 
 /** Resolves to the stored URL, plus an optional non-fatal warning to surface. */
 export type UploadResult = { url: string; warning?: string };
@@ -161,8 +162,11 @@ function ImageField({
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [warn, setWarn] = useState<string | null>(null);
+  // Cache-bust the in-editor preview so a re-uploaded / fixed file shows fresh.
+  const [bust, setBust] = useState(() => Date.now());
   const inputRef = useRef<HTMLInputElement>(null);
   const url = typeof value === "string" ? value : "";
+  const previewUrl = bustCache(url, bust);
 
   async function onFile(ev: React.ChangeEvent<HTMLInputElement>) {
     const file = ev.target.files?.[0];
@@ -179,6 +183,7 @@ function ImageField({
       const { url: next, warning } = await upload(file);
       if (!next) throw new Error("File uploaded but no URL was returned.");
       onChange(next);
+      setBust(Date.now());
       if (warning) setWarn(warning);
     } catch (ex: any) {
       setErr(ex?.message || "Upload failed.");
@@ -193,10 +198,10 @@ function ImageField({
         <div className="h-20 w-28 shrink-0 overflow-hidden rounded-md border border-white/10 bg-black/40">
           {url ? (
             /\.(mp4|webm|mov|m4v|ogv)(\?|$)/i.test(url) ? (
-              <video src={url} muted loop playsInline autoPlay className="h-full w-full object-cover" />
+              <video src={previewUrl} muted loop playsInline autoPlay className="h-full w-full object-cover" />
             ) : (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={url} alt="" className="h-full w-full object-cover" />
+              <img src={previewUrl} alt="" className="h-full w-full object-cover" />
             )
           ) : (
             <div className="flex h-full w-full items-center justify-center text-[0.65rem] text-[#5f5c57]">
@@ -223,6 +228,17 @@ function ImageField({
               >
                 File upload off — paste a URL above
               </span>
+            )}
+            {url && (
+              <a
+                href={previewUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-md border border-white/15 px-3 py-1.5 text-xs font-medium text-[#a39e94] underline-offset-2 transition hover:border-[#b89b78]/60 hover:text-[#b89b78]"
+                title="Open the direct file URL in a new tab to verify it loads"
+              >
+                Open uploaded file ↗
+              </a>
             )}
             {url && (
               <button type="button" onClick={() => onChange("")} className={addBtn}>

@@ -4,8 +4,8 @@ import Image from "next/image";
 import { motion, useScroll, useTransform } from "motion/react";
 import { useRef } from "react";
 import { Section } from "@/components/ui/Section";
-import { isSupabasePublicUrl, videoMime } from "@/components/ui/Media";
-import { useInfo, useSections } from "@/lib/content-context";
+import { bustCache, isSupabasePublicUrl, videoMime } from "@/lib/media-url";
+import { useInfo, useMediaVersion, useSections } from "@/lib/content-context";
 import { useIntro } from "@/lib/intro";
 import { EASE_OUT_EXPO } from "@/lib/motion";
 
@@ -15,6 +15,9 @@ export function Cover() {
   const c = useSections().cover;
   const p = useInfo();
   const { introDone } = useIntro();
+  const version = useMediaVersion();
+  const coverUrl = bustCache(c.media.src, version);
+  const coverPoster = c.media.poster ? bustCache(c.media.poster, version) : undefined;
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: ref,
@@ -45,25 +48,25 @@ export function Cover() {
               animate={introDone ? { scale: 1 } : { scale: 1.18 }}
               transition={{ duration: 3.2, ease: EASE_OUT_EXPO }}
             >
-              {isVideo(c.media.src) ? (
+              {isVideo(coverUrl) ? (
                 <video
                   className="absolute inset-0 h-full w-full object-cover"
                   autoPlay
                   loop
                   muted
                   playsInline
-                  poster={c.media.poster}
+                  poster={coverPoster}
                 >
-                  <source src={c.media.src} type={videoMime(c.media.src)} />
+                  <source src={coverUrl} type={videoMime(coverUrl)} />
                 </video>
               ) : (
                 <Image
-                  src={c.media.src}
+                  src={coverUrl}
                   alt={c.media.alt}
                   fill
                   priority
                   sizes="100vw"
-                  unoptimized={isSupabasePublicUrl(c.media.src)}
+                  unoptimized={isSupabasePublicUrl(coverUrl)}
                   className="object-cover"
                 />
               )}

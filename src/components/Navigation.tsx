@@ -3,7 +3,8 @@
 import { AnimatePresence, motion } from "motion/react";
 import { useLenis } from "lenis/react";
 import { useEffect, useState } from "react";
-import { useInfo, useStops, useStudio } from "@/lib/content-context";
+import { useInfo, useMediaVersion, useStops, useStudio } from "@/lib/content-context";
+import { bustCache } from "@/lib/media-url";
 import { EASE_IN_OUT_QUINT, EASE_OUT_EXPO } from "@/lib/motion";
 
 const menuVariants = {
@@ -34,6 +35,7 @@ export function Navigation({ introDone }: { introDone: boolean }) {
   const stops = useStops();
   const studio = useStudio();
   const info = useInfo();
+  const version = useMediaVersion();
   const [open, setOpen] = useState(false);
   const [tone, setTone] = useState<"dark" | "light">("dark");
   const [hidden, setHidden] = useState(false);
@@ -124,7 +126,7 @@ export function Navigation({ introDone }: { introDone: boolean }) {
                 {studio.logo?.header ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={studio.logo.header}
+                    src={bustCache(studio.logo.header, version)}
                     alt={studio.name}
                     className="h-7 w-auto select-none object-contain mix-blend-difference transition-opacity group-hover:opacity-70 md:h-9"
                     draggable={false}

@@ -215,6 +215,8 @@ export type Project = {
   /** internal title shown in the admin project list */
   title: string;
   published: boolean;
+  /** epoch ms of the last edit — used to cache-bust this deck's uploaded media */
+  updatedAt?: number;
   info: ProjectInfo;
   sequence: SequenceItem[];
   sections: SectionData;

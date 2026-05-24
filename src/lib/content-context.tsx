@@ -73,3 +73,8 @@ export function useStops() {
 export function useYear() {
   return usePresentation().year;
 }
+/** Cache-bust token for this deck's uploaded media — changes when the project is edited. */
+export function useMediaVersion(): string {
+  const { updatedAt } = usePresentation().project;
+  return updatedAt != null ? String(updatedAt) : "0";
+}

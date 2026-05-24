@@ -3,7 +3,8 @@
 import { AnimatePresence, motion, useMotionValue, animate, useTransform } from "motion/react";
 import { useLenis } from "lenis/react";
 import { useEffect, useState } from "react";
-import { useStudio } from "@/lib/content-context";
+import { useMediaVersion, useStudio } from "@/lib/content-context";
+import { bustCache } from "@/lib/media-url";
 import { EASE_IN_OUT_QUINT, EASE_OUT_EXPO } from "@/lib/motion";
 
 /** Distinguish an MP4/WebM logo from a GIF/PNG/SVG/Lottie-image logo. */
@@ -14,13 +15,14 @@ function introKind(src: string): "video" | "image" {
 
 export function Preloader({ onDone }: { onDone: () => void }) {
   const studio = useStudio();
+  const version = useMediaVersion();
   const [visible, setVisible] = useState(true);
   const lenis = useLenis();
   const progress = useMotionValue(0);
   const [display, setDisplay] = useState(0);
   const barScale = useTransform(progress, [0, 100], [0, 1]);
 
-  const introLogo = studio.logo?.intro ?? "";
+  const introLogo = bustCache(studio.logo?.intro ?? "", version);
   const hasIntroLogo = Boolean(introLogo);
 
   // lock scroll while the curtain is up

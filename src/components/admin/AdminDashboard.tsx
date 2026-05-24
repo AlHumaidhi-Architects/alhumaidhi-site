@@ -122,14 +122,25 @@ export function AdminDashboard({
   }, []);
 
   /* ── content mutators ── */
+  // Every edit stamps the project's updatedAt; the renderer uses it to cache-bust
+  // this deck's uploaded media (?v=updatedAt) so re-saves always serve fresh files.
   const patchProject = (id: string, fn: (p: Project) => Project) =>
-    setContent((c) => ({ ...c, projects: c.projects.map((p) => (p.id === id ? fn(p) : p)) }));
+    setContent((c) => ({
+      ...c,
+      projects: c.projects.map((p) => (p.id === id ? { ...fn(p), updatedAt: Date.now() } : p)),
+    }));
 
   const setInfo = (value: any) => patchProject(activeProject.id, (p) => ({ ...p, info: value }));
   const setSection = (sectionId: SectionId, value: any) =>
     patchProject(activeProject.id, (p) => ({ ...p, sections: { ...p.sections, [sectionId]: value } }));
   const setSequence = (seq: SequenceItem[]) => patchProject(activeProject.id, (p) => ({ ...p, sequence: seq }));
-  const setStudio = (value: any) => setContent((c) => ({ ...c, studio: value }));
+  // The logo lives on `studio` (shared) — bump the active deck so its logo busts too.
+  const setStudio = (value: any) =>
+    setContent((c) => ({
+      ...c,
+      studio: value,
+      projects: c.projects.map((p) => (p.id === activeProject.id ? { ...p, updatedAt: Date.now() } : p)),
+    }));
   const setTheme = (value: any) => setContent((c) => ({ ...c, theme: value }));
 
   const setTitle = (title: string) => patchProject(activeProject.id, (p) => ({ ...p, title }));
