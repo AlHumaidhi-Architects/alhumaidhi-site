@@ -1,21 +1,20 @@
-# Alhumaidhi Architects — Cinematic Presentation
+# Alhumaidhi Architects — Presentation Template
 
-A premium, fullscreen architecture-presentation website for **Alhumaidhi Architects** —
-a warm-ivory, editorial aesthetic in the spirit of high-end European architecture studios
-(à la the "Balzar" template), with cinematic transitions and fullscreen storytelling kept
-intact. Built as a **reusable presentation template**: swap the content model and you have a
-brand-new project deck with the same motion, rhythm and layout.
+A premium, fullscreen **architecture-presentation platform** built as a reusable template.
+One studio brand, many projects: each project is a complete, cinematic client deck with the
+same structure, motion and rhythm — so a new presentation is made by **duplicating an existing
+one and swapping the copy and imagery**, not by writing code.
+
+Warm-ivory, editorial aesthetic in the spirit of high-end European architecture studios —
+charcoal typography, muted taupe accents (Cormorant Garamond display / Inter sans), a soft
+film-grain overlay, an animated preloader, a custom cursor, a fullscreen index menu, and
+scroll-driven parallax / clip-path reveals throughout.
 
 - **Next.js 16** (App Router) · **TypeScript**
 - **Tailwind CSS v4**
 - **Motion** (`motion/react`, ex-Framer Motion) for animation
 - **Lenis** for smooth scrolling
-- Warm-ivory editorial aesthetic in the spirit of premium European architecture
-  studios (Balzar-style) · charcoal typography, muted taupe accents · minimal
-  architecture typography (Cormorant Garamond display / Inter sans) · soft film-grain overlay
-- Animated **preloader** with progress counter and curtain transition
-- **Custom cursor**, fullscreen **elegant menu**, scroll progress + section index
-- Scroll-driven **parallax**, clip-path image reveals, word/line text reveals
+- **Supabase** for editable content + image storage
 - Fully responsive, `prefers-reduced-motion` aware
 
 ## Getting started
@@ -28,37 +27,74 @@ npm run start    # serve the production build
 npm run lint
 ```
 
+The site runs with **no configuration** — it falls back to a built-in demo project
+("Majlis House") defined in `src/lib/content.ts`. Add Supabase + an admin password (below)
+to make the `/admin` editor save changes.
+
+## How it works — projects & routes
+
+The whole platform is a single content model (`SiteContent`):
+
+```
+SiteContent
+  ├─ studio        global brand (wordmark, contact, socials)
+  ├─ theme         global colour palette (shared by all projects)
+  ├─ projects[]    each a complete, duplicatable presentation
+  └─ publishedId   which project the root URL (/) shows
+```
+
+Each **project** carries its own `info` (name, client, location, year…), an editable
+`sequence` (section order + visibility + menu labels), and its `sections` content.
+
+| Route | Shows |
+|-------|-------|
+| `/` | The **published** project (set as "homepage" in the admin). |
+| `/p/[slug]` | Any project by its slug — the **per-client share link**. |
+| `/admin` | The password-protected editor. |
+| `/admin/login` | Sign-in. |
+
 ## Section structure
 
-The deck is a single page (`src/app/page.tsx`) composed of nine cinematic sections,
-each a fullscreen-friendly client component in `src/components/sections/`:
+Every project follows the same fixed nine-step sequence. Each is a fullscreen-friendly
+client component in `src/components/sections/`, rendered in the project's chosen order by
+`SectionRenderer.tsx`.
 
-| # | Section            | File           | Notes |
-|---|--------------------|----------------|-------|
-| 01 | Cover             | `Cover.tsx`     | Fullscreen hero — Ken-Burns zoom, layered parallax, animated meta. |
-| 02 | Project Overview  | `Overview.tsx`  | Project name, lead statement, full-bleed image, “at a glance” facts. |
-| 03 | Concept           | `Concept.tsx`   | Design intent, keyword, sticky image, operating principles. |
-| 04 | Moodboard         | `Moodboard.tsx` | Masonry collage of reference plates with per-image parallax. |
-| 05 | Plans             | `Plans.tsx`     | Horizontal snap-scroll gallery of plan drawings, level by level. |
-| 06 | Renders           | `Renders.tsx`   | Full-bleed cinematic visualisations with overlaid captions. |
-| 07 | Materials         | `Materials.tsx` | Alternating material palette — swatch + description. |
-| 08 | Team              | `Team.tsx`      | Studio statement, core team, consultant team. |
-| 09 | Contact           | `Contact.tsx`   | Oversized CTA, email/phone/address, socials, footer + back-to-top. |
+| # | Section | File | Notes |
+|---|---------|------|-------|
+| 01 | Cover           | `Cover.tsx`          | Fullscreen hero — full-bleed image/video, stacked title lines, animated meta. |
+| 02 | Intro           | `Intro.tsx`          | Project named large, lead statement, full-bleed image, "at a glance" facts, secondary image. |
+| 03 | Site Plot       | `SitePlot.tsx`       | Site photograph, design-intent text, and plan drawings. |
+| 04 | GIF Diagram     | `GifDiagram.tsx`     | Full-bleed animated massing diagram (GIF or MP4) with caption. |
+| 05 | Mood Images     | `MoodImages.tsx`     | Editorial collage of reference plates with per-image parallax. |
+| 06 | Floors          | `Floors.tsx`         | **One slide per floor** — floor plan, design-intent text, and reference imagery. |
+| 07 | Specifications  | `Specifications.tsx` | Grouped schedules as quiet ruled definition lists. |
+| 08 | Cost Estimate   | `CostEstimate.tsx`   | Fully editable table (columns + rows), total and footnote. |
+| 09 | Next Steps      | `NextSteps.tsx`      | Numbered steps, contact CTA, footer + back-to-top. |
+
+The **Floors** section is special: it expands into one navigable slide per floor, each with
+its own entry in the index and side ticks (see `src/lib/stops.ts`).
 
 ## The `/admin` editor
 
-There is a browser-based, password-protected editor at **`/admin`** so non-technical
-people can change the deck without touching code. It can edit:
+A browser-based, password-protected editor at **`/admin`** lets non-technical people manage
+everything without touching code:
 
-- every piece of text — eyebrows, titles, subtitles, descriptions, body copy
-- all images (paste a URL **or** upload a file to Supabase Storage)
-- the colour palette (page background, alternate section background, text, accent…)
-- which sections are visible, and their names in the navigation menu
-- studio/brand details, contact info, social links, and the project facts
+- **Projects** — create, **duplicate** (the fastest way to start a new deck), delete, rename,
+  set the slug (share link), publish/unpublish, and choose which one is the homepage.
+- **Sequence** — reorder sections, rename their menu labels, and show/hide them per project.
+- **Every field** — eyebrows, titles, summaries, body copy, facts; project name, client,
+  location, year, status, etc.
+- **Images & video** — paste a URL **or** upload a file to Supabase Storage. Works for the
+  cover, intro images, site photo & plans, the GIF diagram, mood images, and each floor's
+  plan and reference images.
+- **Cost table** — add/rename/remove columns, add/reorder/remove rows, set the total.
+- **Studio & brand** — wordmark, contact, social links (shared across all projects).
+- **Colours** — the shared palette (page background, text, accents…).
 
-Content is stored as a single JSON document in **Supabase**; the public site reads it
-on every request (falling back to the built-in `src/lib/content.ts` whenever Supabase
-isn't reachable), and `Save` revalidates the site instantly.
+Content is stored as a single JSON document in **Supabase**; the public site reads it on every
+request and falls back to the built-in `src/lib/content.ts` whenever Supabase isn't reachable.
+`Save` revalidates the site instantly. Saved data is reconciled on read (`get-content.ts`),
+including a migration path from the older single-deck shape.
 
 ### Setup (one time)
 
@@ -81,68 +117,75 @@ isn't reachable), and `Save` revalidates the site instantly.
    );
    ```
 
-3. *(Optional, for in-browser image uploads)* In Supabase **Storage**, create a
-   **public** bucket named `site-media`. Without it you can still paste image URLs.
+3. *(Optional, for in-browser image uploads)* In Supabase **Storage**, create a **public**
+   bucket named `site-media`. Without it you can still paste image URLs.
 
 4. Restart `npm run dev`, open `/admin`, sign in with `ADMIN_PASSWORD`.
 
-If any of these are missing, `/admin` shows a short setup notice and the public site
+In production (Vercel) set the same variables under **Settings → Environment Variables**, then
+redeploy. If any of these are missing, `/admin` shows a short setup notice and the public site
 keeps serving its built-in content — nothing breaks.
 
-> Auth is a single shared password kept in an httpOnly cookie — fine for a small studio
-> deck. Set `ADMIN_PASSWORD` to something strong and serve over HTTPS in production.
+> Auth is a single shared password kept in an httpOnly cookie — fine for a small studio deck.
+> Set `ADMIN_PASSWORD` to something strong and serve over HTTPS in production. The
+> `SUPABASE_SERVICE_ROLE_KEY` is a full-access secret — keep it server-side only (never commit
+> it, never expose it to the browser).
 
-## How to re-skin it for a new project (in code)
+## Adding a new editable field (in code)
 
-The built-in defaults live in **`src/lib/content.ts`** — the fallback the site uses
-before anything is saved through `/admin`:
+The model is split into two places that must stay in sync:
 
-- `studio` — brand wordmark, contact details, socials.
-- `nav` — the ordered section list (drives the menu, the side index and section IDs).
-- `presentation` — per-section copy and imagery (`cover`, `overview`, `concept`,
-  `moodboard`, `plans`, `renders`, `materials`, `team`, `contact`).
-- `theme` — the editable colour palette; `visibility` — which sections render.
+1. **`src/lib/content.ts`** — the TypeScript shape + the built-in demo defaults.
+2. **`src/lib/admin-schema.ts`** — the declarative description that *generates* the admin form.
 
-Imagery is referenced by Unsplash photo ID via the `img()` helper; `next.config.ts`
-allows images from any HTTPS host so the editor can point at any CDN/Supabase Storage.
-The editor's form layout is generated from `src/lib/admin-schema.ts` — add a field
-there to make it editable.
+Add the field to the relevant type/section in `content.ts`, then add a matching entry in the
+section's schema in `admin-schema.ts`, and render it in the section component. To add a whole
+new **section type**, also register it in `SECTION_ORDER`/`SECTION_LABELS` (`content.ts`),
+`SectionRenderer.tsx`, `sectionSchemas` (`admin-schema.ts`), and — if it should be its own
+nav stop — `stops.ts`.
+
+Imagery in the demo defaults is referenced by Unsplash photo ID via the `img()` helper;
+`next.config.ts` allows images from any HTTPS host so editors can point at any CDN / Supabase
+Storage.
 
 ## Architecture
 
 ```
 src/
   app/
-    layout.tsx          Fonts, metadata, applies the editable colour palette to <html>
-    page.tsx            ContentProvider + AppShell + <SectionList>
-    globals.css         Tailwind v4 theme, type helpers, grain/vignette, Lenis CSS
-    admin/              The /admin editor (layout, dashboard page, /admin/login)
-    api/admin/          Route handlers: login, logout, save (content), upload (image)
+    layout.tsx           Fonts, metadata, applies the editable colour palette to <html>
+    page.tsx             Renders the published project via <Presentation>
+    p/[slug]/page.tsx    Per-client project page (share link) + per-project metadata
+    globals.css          Tailwind v4 theme, type helpers, grain/vignette, Lenis CSS
+    admin/               The /admin editor (layout, dashboard page, /admin/login)
+    api/admin/           Route handlers: login, logout, save (content), upload (image)
   components/
-    AppShell.tsx        Lenis provider + Preloader + Cursor + Navigation + ScrollProgress
-    SectionList.tsx     Renders the visible sections in order (reads `visibility`)
-    Preloader.tsx       Animated loading screen (progress counter → curtain lift)
-    Cursor.tsx          Spring-following custom cursor (pointer:fine only)
-    Navigation.tsx      Fixed header + fullscreen clip-reveal menu (Lenis-powered scroll)
-    ScrollProgress.tsx  Top progress bar, bottom-left section label, right-side index
-    sections/*.tsx      The nine presentation sections (read content from context)
-    admin/              AdminDashboard, schema-driven form fields, login form, notices
+    Presentation.tsx     One project's deck: provider + AppShell + SectionRenderer
+    SectionRenderer.tsx  Renders a project's sections in its sequence order
+    AppShell.tsx         Lenis provider + Preloader + Cursor + Navigation + ScrollProgress
+    Preloader.tsx        Animated loading screen (progress counter → curtain lift)
+    Cursor.tsx           Spring-following custom cursor (pointer:fine only)
+    Navigation.tsx       Fixed header + fullscreen clip-reveal index menu
+    ScrollProgress.tsx   Top progress bar, bottom-left section label, right-side index
+    sections/*.tsx       The nine presentation sections (read content from context)
+    admin/               AdminDashboard, schema-driven form fields, login form, notices
     ui/
-      Section.tsx       Section shell (id + data-section index) and SectionTag label
-      Media.tsx         next/image with clip-path reveal + optional scroll parallax + tint
-      AnimatedText.tsx  Word- or line-staggered text reveal (semantic tag passthrough)
-      Reveal.tsx        Fade-up-on-view wrapper + RevealGroup for staggered children
+      Section.tsx        Section shell (id + data-section index) and SectionTag label
+      Media.tsx          next/image|video with clip-path reveal + optional scroll parallax
+      AnimatedText.tsx   Word- or line-staggered text reveal (semantic tag passthrough)
+      Reveal.tsx         Fade-up-on-view wrapper
   lib/
-    content.ts          Built-in defaults + SiteContent / theme / visibility types
-    content-context.tsx Client context + hooks (useStudio / useNav / usePresentation …)
-    get-content.ts      Loads live content from Supabase, deep-merged over the defaults
-    supabase-admin.ts   Server-only Supabase client (service-role key)
+    content.ts           Types, the default demo project, and shared helpers (slugify, …)
+    content-context.tsx  Client context + hooks (useStudio / useInfo / useSections / useStops)
+    get-content.ts       Loads live content from Supabase, reconciles over the defaults
+    stops.ts             Builds the navigable "stops" (Floors expands one stop per floor)
+    supabase-admin.ts    Server-only Supabase client (service-role key)
     admin-auth.ts        Password check + signed session cookie helpers
     admin-schema.ts      Declarative description of every editable field (drives the forms)
     theme-style.ts       Turns the palette into the CSS variables Tailwind tokens use
-    motion.ts           Shared easings, variants and viewport presets
-    intro.tsx           IntroContext — lets sections react to the preloader finishing
+    motion.ts            Shared easings, variants and viewport presets
+    intro.tsx            IntroContext — lets sections react to the preloader finishing
 ```
 
-Reduced-motion: the grain animation and all transitions/animations are neutralised under
+Reduced-motion: the grain animation and all transitions are neutralised under
 `@media (prefers-reduced-motion: reduce)`.
