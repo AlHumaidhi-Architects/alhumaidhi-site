@@ -95,7 +95,7 @@ function FloorSection({ floor, i, chapter }: { floor: Floor; i: number; chapter?
                     src={mood.src}
                     alt={mood.alt}
                     className="w-full"
-                    style={{ aspectRatio: mood.ratio ?? "3 / 4" }}
+                    style={{ aspectRatio: (mood.ratio || "").trim() || "3 / 4" }}
                     parallax={k % 2 === 0 ? 30 : 16}
                     sizes="(max-width: 768px) 50vw, 30vw"
                   />

@@ -98,7 +98,7 @@ export function GifDiagram() {
                   alt={item.alt}
                   poster={item.poster}
                   className="w-full"
-                  style={{ aspectRatio: item.ratio ?? "4 / 3" }}
+                  style={{ aspectRatio: (item.ratio || "").trim() || "4 / 3" }}
                   parallax={0}
                   sizes="(max-width: 768px) 100vw, 50vw"
                 />

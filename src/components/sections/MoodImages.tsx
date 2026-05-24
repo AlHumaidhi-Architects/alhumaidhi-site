@@ -47,7 +47,7 @@ export function MoodImages() {
                 src={image.src}
                 alt={image.alt}
                 className="w-full"
-                style={{ aspectRatio: image.ratio ?? "4 / 3" }}
+                style={{ aspectRatio: (image.ratio || "").trim() || "4 / 3" }}
                 parallax={PARALLAX[i % PARALLAX.length]}
                 sizes="(max-width: 768px) 100vw, 50vw"
               />

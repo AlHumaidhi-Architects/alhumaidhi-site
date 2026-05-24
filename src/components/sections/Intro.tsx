@@ -125,7 +125,7 @@ export function Intro() {
               alt={item.alt}
               poster={item.poster}
               className="w-full"
-              style={{ aspectRatio: item.ratio ?? "4 / 5" }}
+              style={{ aspectRatio: (item.ratio || "").trim() || "4 / 5" }}
               parallax={50}
               sizes="(max-width: 768px) 100vw, 50vw"
             />
