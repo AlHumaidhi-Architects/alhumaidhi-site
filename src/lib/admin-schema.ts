@@ -14,6 +14,7 @@ export type Field =
   | { kind: "textarea"; label: string; help?: string; rows?: number }
   | { kind: "color"; label: string; help?: string }
   | { kind: "image"; label: string; help?: string }
+  | { kind: "file"; label: string; help?: string; accept?: string }
   | { kind: "toggle"; label: string; help?: string }
   | { kind: "stringList"; label: string; help?: string; itemLabel?: string; addLabel?: string }
   | { kind: "table"; label: string; help?: string }
@@ -192,6 +193,12 @@ export const projectInfoSchema: GroupField = grp(undefined, [
   e("year", t("Year")),
   e("status", t("Status")),
   e("phase", t("Phase", "e.g. Concept Presentation · Vol. 01")),
+  e("plansPdf", {
+    kind: "file",
+    label: "Plans PDF",
+    accept: ".pdf,application/pdf",
+    help: 'Upload a PDF (or paste a URL). Shows as a “Download Plans” button in the Intro “At a glance” block. Leave empty to hide the button.',
+  }),
 ]);
 
 export const studioSchema: GroupField = grp(undefined, [
@@ -249,6 +256,7 @@ export function blankValue(field: Field): unknown {
     case "text":
     case "textarea":
     case "image":
+    case "file":
       return "";
     case "color":
       return "#888888";

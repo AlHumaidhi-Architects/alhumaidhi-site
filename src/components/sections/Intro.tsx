@@ -114,6 +114,27 @@ export function Intro() {
                 </Reveal>
               ))}
             </dl>
+
+            {/* Download Plans — shown only when a Plans PDF is set in /admin */}
+            {p.plansPdf && (
+              <Reveal delay={0.15} className="mt-7">
+                <a
+                  href={p.plansPdf}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  download
+                  className="group flex w-full items-center justify-between gap-6 border border-line px-5 py-4 transition-colors hover:border-bone"
+                >
+                  <span className="font-sans text-[0.7rem] uppercase tracking-[0.26em] text-bone">Download Plans</span>
+                  <span
+                    aria-hidden
+                    className="text-bone-faint transition-transform duration-500 group-hover:translate-y-0.5"
+                  >
+                    ↓
+                  </span>
+                </a>
+              </Reveal>
+            )}
           </div>
         </div>
 

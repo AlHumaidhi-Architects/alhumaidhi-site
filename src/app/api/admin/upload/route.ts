@@ -13,10 +13,11 @@ const ALLOWED_MIME = new Set([
   "video/mp4",
   "video/webm",
   "video/quicktime", // .mov
+  "application/pdf", // downloadable plans / documents
 ]);
-const ALLOWED_EXT = /\.(jpe?g|png|webp|gif|avif|mp4|webm|mov|m4v)$/i;
+const ALLOWED_EXT = /\.(jpe?g|png|webp|gif|avif|mp4|webm|mov|m4v|pdf)$/i;
 
-/** A file is acceptable if its MIME type OR its extension is one we can render. */
+/** A file is acceptable if its MIME type OR its extension is one we support. */
 function isSupportedFile(type: string, name: string): boolean {
   if (type && ALLOWED_MIME.has(type.toLowerCase())) return true;
   return ALLOWED_EXT.test(name); // some browsers send empty/odd MIME types
@@ -68,7 +69,7 @@ export async function POST(req: Request) {
   if (!isSupportedFile(fileType, original)) {
     return NextResponse.json(
       {
-        error: `Unsupported file type${fileType ? ` (${fileType})` : ""}. Upload a JPG, PNG, WEBP, GIF, or MP4 / WEBM / MOV video — or paste a URL instead.`,
+        error: `Unsupported file type${fileType ? ` (${fileType})` : ""}. Upload an image (JPG, PNG, WEBP, GIF), a video (MP4, WEBM, MOV), or a PDF — or paste a URL instead.`,
       },
       { status: 415 },
     );

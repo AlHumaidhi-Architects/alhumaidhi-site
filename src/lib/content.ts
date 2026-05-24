@@ -213,6 +213,9 @@ export type ProjectInfo = {
   status: string;
   phase: string;
   description: string;
+  /** optional PDF (Supabase upload or pasted URL) — shows a "Download Plans"
+   *  button in the Intro when set */
+  plansPdf?: string;
 };
 
 export type Project = {

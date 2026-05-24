@@ -262,6 +262,97 @@ function ImageField({
   );
 }
 
+function FileField({
+  value,
+  onChange,
+  upload,
+  canUpload,
+  help,
+  accept = ".pdf,application/pdf",
+}: {
+  value: any;
+  onChange: (v: string) => void;
+  upload: UploadFn;
+  canUpload: boolean;
+  help?: string;
+  accept?: string;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const url = typeof value === "string" ? value : "";
+  const name = url ? decodeURIComponent(url.split("?")[0].split("/").pop() || "file") : "";
+
+  async function onFile(ev: React.ChangeEvent<HTMLInputElement>) {
+    const file = ev.target.files?.[0];
+    ev.target.value = "";
+    if (!file) return;
+    setErr(null);
+    if (file.type !== "application/pdf" && !/\.pdf$/i.test(file.name)) {
+      setErr("Please choose a PDF file.");
+      return;
+    }
+    setBusy(true);
+    try {
+      const { url: next } = await upload(file);
+      if (!next) throw new Error("File uploaded but no URL was returned.");
+      onChange(next);
+    } catch (ex: any) {
+      setErr(ex?.message || "Upload failed.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div>
+      {url ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="flex min-w-0 items-center gap-2 rounded-md border border-white/10 bg-black/30 px-3 py-1.5 text-xs text-[#e8e4db]">
+            <span aria-hidden>📄</span>
+            <span className="max-w-[16rem] truncate">{name}</span>
+          </span>
+          <a href={url} target="_blank" rel="noreferrer" className={addBtn}>
+            Open ↗
+          </a>
+          {canUpload && (
+            <button type="button" disabled={busy} onClick={() => inputRef.current?.click()} className={addBtn}>
+              {busy ? "Uploading…" : "Replace"}
+            </button>
+          )}
+          <button type="button" onClick={() => onChange("")} className={addBtn}>
+            Remove
+          </button>
+        </div>
+      ) : (
+        <div className="flex flex-wrap items-center gap-2">
+          {canUpload ? (
+            <button type="button" disabled={busy} onClick={() => inputRef.current?.click()} className={addBtn}>
+              {busy ? "Uploading…" : "Upload PDF"}
+            </button>
+          ) : (
+            <span
+              className="rounded-md border border-dashed border-white/10 px-3 py-1.5 text-xs text-[#5f5c57]"
+              title="Connect Supabase storage to enable file uploads"
+            >
+              File upload off — paste a URL below
+            </span>
+          )}
+        </div>
+      )}
+      <input
+        className={`${inputBase} mt-2`}
+        value={url}
+        onChange={(ev) => onChange(ev.target.value)}
+        placeholder="https://… PDF URL"
+      />
+      <input ref={inputRef} type="file" accept={accept} className="hidden" onChange={onFile} />
+      {err && <p className="mt-1 text-[0.72rem] text-red-300">{err}</p>}
+      <Help>{help}</Help>
+    </div>
+  );
+}
+
 function StringListField({
   value,
   onChange,
@@ -529,6 +620,17 @@ export function FieldView({
     case "image":
       return (
         <ImageField value={value} onChange={onChange} upload={upload} canUpload={canUpload} help={field.help} />
+      );
+    case "file":
+      return (
+        <FileField
+          value={value}
+          onChange={onChange}
+          upload={upload}
+          canUpload={canUpload}
+          help={field.help}
+          accept={field.accept}
+        />
       );
     case "toggle":
       return (
