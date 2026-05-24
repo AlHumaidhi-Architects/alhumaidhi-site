@@ -31,9 +31,10 @@ export function AdminNotice({ kind }: { kind: "no-admin" | "no-supabase" }) {
         <pre className="overflow-x-auto rounded-lg border border-white/10 bg-black/40 p-4 text-xs leading-relaxed text-[#cfcabf]">{SCHEMA_SQL}</pre>
 
         <p>
-          (Optional) For drag-free image uploads, create a <strong className="text-[#e8e4db]">public</strong> Storage
-          bucket named <code className="rounded bg-black/40 px-1.5 py-0.5 text-[#e8e4db]">site-media</code>. You can
-          always paste an image URL instead.
+          For in-browser image uploads, a <strong className="text-[#e8e4db]">public</strong> Storage bucket named{" "}
+          <code className="rounded bg-black/40 px-1.5 py-0.5 text-[#e8e4db]">site-media</code> is{" "}
+          <strong className="text-[#e8e4db]">created automatically</strong> on first upload (using the service-role
+          key). You can always paste an image URL instead.
         </p>
 
         <p className="text-xs text-[#6f6c66]">

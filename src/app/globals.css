@@ -13,6 +13,7 @@
   --color-bone-faint: #8b8472; /* captions, indices, labels */
   --color-clay: #9d8d72;       /* a whisper of warm sand — used minimally */
   --color-clay-dim: #786c57;
+  --color-accent: #c0392b;     /* highlight red — emphasised words & cost total */
   --color-line: rgba(26, 23, 17, 0.14);
   --color-line-soft: rgba(26, 23, 17, 0.07);
 

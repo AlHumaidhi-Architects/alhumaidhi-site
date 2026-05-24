@@ -16,6 +16,7 @@ import {
 import { projectInfoSchema, sectionSchemas, studioSchema, themeSchema } from "@/lib/admin-schema";
 import { PanelFields, Toggle, inputBase, type UploadFn } from "@/components/admin/fields";
 import { ProjectsGrid } from "@/components/admin/ProjectsGrid";
+import type { SupabaseStatus } from "@/lib/supabase-admin";
 
 type TabKey = "sequence" | "info" | SectionId | "studio" | "theme";
 type View = "dashboard" | "editor";
@@ -74,12 +75,14 @@ const ghostBtn =
 
 export function AdminDashboard({
   initialContent,
-  supabaseReady,
+  supabase,
 }: {
   initialContent: SiteContent;
-  supabaseReady: boolean;
+  supabase: SupabaseStatus;
 }) {
   const router = useRouter();
+  const supabaseReady = supabase.configured;
+  const canUpload = supabase.configured && supabase.storage === "ok";
   const [content, setContent] = useState<SiteContent>(() => structuredClone(initialContent));
   const [savedSnapshot, setSavedSnapshot] = useState<SiteContent>(() => structuredClone(initialContent));
   const [activeId, setActiveId] = useState<string>(
@@ -324,10 +327,32 @@ export function AdminDashboard({
           {message.text}
         </div>
       )}
-      {!supabaseReady && (
-        <div className="mb-4 rounded-md border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-xs leading-relaxed text-amber-200">
-          Supabase isn&rsquo;t configured on the server yet, so <strong>Save won&rsquo;t persist</strong>. You can still
-          explore the editor. See the project README for the three environment variables and the one SQL command needed.
+      {!supabaseReady ? (
+        <div className="mb-4 rounded-md border border-amber-400/30 bg-amber-500/10 px-3 py-2.5 text-xs leading-relaxed text-amber-200">
+          <strong>Supabase isn&rsquo;t connected on the server</strong>, so saving changes and uploading images are
+          turned off. Set <code className="rounded bg-black/30 px-1 text-amber-100">NEXT_PUBLIC_SUPABASE_URL</code> and{" "}
+          <code className="rounded bg-black/30 px-1 text-amber-100">SUPABASE_SERVICE_ROLE_KEY</code> (locally in{" "}
+          <code className="rounded bg-black/30 px-1 text-amber-100">.env.local</code> and in your Vercel project&rsquo;s
+          Environment Variables), then restart / redeploy. You can keep editing here and{" "}
+          <strong>paste an image URL</strong> for any photo in the meantime.
+        </div>
+      ) : supabase.table !== "ok" ? (
+        <div className="mb-4 rounded-md border border-amber-400/30 bg-amber-500/10 px-3 py-2.5 text-xs leading-relaxed text-amber-200">
+          Connected to Supabase, but the <code className="rounded bg-black/30 px-1 text-amber-100">site_content</code>{" "}
+          table {supabase.table === "missing" ? "doesn’t exist yet" : "couldn’t be read"}, so{" "}
+          <strong>saving won&rsquo;t work</strong> until it&rsquo;s created. Run the one SQL command from the README.
+          {supabase.detail ? ` (${supabase.detail})` : ""}
+        </div>
+      ) : supabase.storage !== "ok" ? (
+        <div className="mb-4 rounded-md border border-amber-400/30 bg-amber-500/10 px-3 py-2.5 text-xs leading-relaxed text-amber-200">
+          Connected to Supabase, but the <code className="rounded bg-black/30 px-1 text-amber-100">site-media</code>{" "}
+          storage bucket isn&rsquo;t ready, so <strong>file uploads are off</strong> — paste an image URL instead.
+          {supabase.detail ? ` (${supabase.detail})` : ""}
+        </div>
+      ) : (
+        <div className="mb-4 flex items-center gap-1.5 text-[0.7rem] text-emerald-300/80">
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+          Supabase connected — saving &amp; image uploads are live.
         </div>
       )}
 
@@ -513,7 +538,7 @@ export function AdminDashboard({
               value={activeProject.info}
               onChange={setInfo}
               upload={upload}
-              canUpload={supabaseReady}
+              canUpload={canUpload}
             />
           </>
         )}
@@ -529,7 +554,7 @@ export function AdminDashboard({
               value={(activeProject.sections as any)[sectionId]}
               onChange={(v) => setSection(sectionId, v)}
               upload={upload}
-              canUpload={supabaseReady}
+              canUpload={canUpload}
             />
           </>
         )}
@@ -537,14 +562,14 @@ export function AdminDashboard({
         {tab === "studio" && (
           <>
             <PanelHeading title="Studio & brand" desc="Shared across every project — studio name, logo wording, contact details and links." />
-            <PanelFields fields={studioSchema.fields} value={content.studio} onChange={setStudio} upload={upload} canUpload={supabaseReady} />
+            <PanelFields fields={studioSchema.fields} value={content.studio} onChange={setStudio} upload={upload} canUpload={canUpload} />
           </>
         )}
 
         {tab === "theme" && (
           <>
             <PanelHeading title="Colours" desc="The shared palette behind the whole platform." />
-            <PanelFields fields={themeSchema.fields} value={content.theme} onChange={setTheme} upload={upload} canUpload={supabaseReady} />
+            <PanelFields fields={themeSchema.fields} value={content.theme} onChange={setTheme} upload={upload} canUpload={canUpload} />
           </>
         )}
       </div>

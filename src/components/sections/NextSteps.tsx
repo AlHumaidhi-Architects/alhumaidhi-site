@@ -1,8 +1,9 @@
 "use client";
 
+import { Fragment } from "react";
 import { Section, SectionTag } from "@/components/ui/Section";
 import { Reveal } from "@/components/ui/Reveal";
-import { AnimatedText } from "@/components/ui/AnimatedText";
+import { Accent } from "@/components/ui/Accent";
 import { useLenis } from "lenis/react";
 import { useInfo, useSections, useStudio, useYear } from "@/lib/content-context";
 
@@ -18,9 +19,11 @@ export function NextSteps() {
     else window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const steps = ns.steps ?? [];
+
   return (
-    <Section domId="nextSteps" bg="ink-2" full className="flex flex-col">
-      <div className="mx-auto flex w-full max-w-[1500px] flex-1 flex-col px-6 pb-12 pt-32 md:px-12 md:pb-16 md:pt-44 lg:px-20">
+    <Section domId="nextSteps" bg="ink" full className="flex flex-col">
+      <div className="mx-auto flex w-full max-w-[1500px] flex-1 flex-col px-6 pb-12 pt-32 md:px-12 md:pb-16 md:pt-40 lg:px-20">
         <div className="flex items-baseline justify-between">
           <SectionTag domId="nextSteps" />
           <Reveal as="span" className="hidden font-sans text-[0.62rem] tracking-[0.26em] text-bone-faint md:block">
@@ -28,75 +31,89 @@ export function NextSteps() {
           </Reveal>
         </div>
 
-        <div className="mt-16 flex flex-1 flex-col justify-center md:mt-0">
-          <AnimatedText
-            as="h2"
-            text={ns.headline}
-            by="line"
-            stagger={0.14}
-            className="display text-[clamp(3rem,12vw,11rem)] leading-[0.96] text-bone"
-          />
+        {/* Title — large, top-left */}
+        <Reveal
+          as="h2"
+          className="mt-10 max-w-4xl text-balance display text-[clamp(2.8rem,9vw,7rem)] leading-[0.98] text-bone md:mt-14"
+        >
+          {(ns.headline ?? []).map((line, i) => (
+            <span key={i} className="block">
+              <Accent text={line} />
+            </span>
+          ))}
+        </Reveal>
 
-          <div className="mt-14 grid gap-x-16 gap-y-14 md:mt-20 md:grid-cols-12">
-            {/* the steps */}
-            <div className="md:col-span-7 md:col-start-1">
-              <Reveal>
-                <p className="copy max-w-xl text-balance text-[1.05rem] leading-[1.8]">{ns.text}</p>
-              </Reveal>
-              {ns.steps.length > 0 && (
-                <dl className="mt-12 border-t border-line">
-                  {ns.steps.map((step, i) => (
-                    <Reveal as="div" key={i} delay={0.05 * i} className="grid grid-cols-[auto_1fr] gap-x-6 border-b border-line py-6 md:gap-x-10">
-                      <dt className="font-sans text-[0.66rem] tabular-nums tracking-[0.28em] text-bone-faint">{step.n}</dt>
-                      <dd>
-                        <h3 className="display text-[clamp(1.4rem,2.6vw,2rem)] text-bone">{step.title}</h3>
-                        <p className="copy mt-2 max-w-md text-[0.95rem] leading-[1.7]">{step.text}</p>
-                      </dd>
-                    </Reveal>
-                  ))}
-                </dl>
-              )}
-            </div>
+        {ns.text && (
+          <Reveal>
+            <p className="copy mt-7 max-w-xl text-balance text-[1.05rem] leading-[1.8]">{ns.text}</p>
+          </Reveal>
+        )}
 
-            {/* contact */}
-            <div className="md:col-span-4 md:col-start-9">
-              <Reveal delay={0.1}>
+        {/* Horizontal steps with numbered circles + dotted arrow connectors */}
+        {steps.length > 0 && (
+          <div className="mt-16 flex flex-col gap-12 md:mt-24 md:flex-row md:items-start md:gap-4 lg:gap-8">
+            {steps.map((step, i) => (
+              <Fragment key={i}>
+                <Reveal as="div" delay={0.08 * i} className="flex-1">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full border border-bone/30 font-sans text-[0.82rem] tabular-nums tracking-[0.12em] text-bone md:h-16 md:w-16">
+                    {step.n}
+                  </div>
+                  <h3 className="mt-6 font-sans text-[1.2rem] font-semibold leading-snug text-bone md:text-[1.4rem]">
+                    <Accent text={step.title} />
+                  </h3>
+                  <p className="copy mt-3 max-w-xs text-[0.95rem] leading-[1.7]">{step.text}</p>
+                </Reveal>
+
+                {i < steps.length - 1 && (
+                  <div
+                    aria-hidden
+                    className="hidden shrink-0 self-start pt-7 md:flex md:w-10 md:items-center lg:w-24"
+                  >
+                    <span className="h-0 flex-1 border-t border-dotted border-bone/45" />
+                    <span className="-ml-0.5 text-[0.95rem] leading-none text-bone/45">→</span>
+                  </div>
+                )}
+              </Fragment>
+            ))}
+          </div>
+        )}
+
+        {/* CTA + contact */}
+        <div className="mt-auto grid gap-10 pt-20 md:grid-cols-12 md:pt-28">
+          <div className="md:col-span-7">
+            <Reveal>
+              <a
+                href={`mailto:${studio.email}`}
+                className="group inline-flex items-baseline gap-4 border-b border-line pb-3 transition-colors hover:border-bone"
+              >
+                <span className="display text-[clamp(1.5rem,3.4vw,2.4rem)] text-bone">{ns.ctaLabel}</span>
+                <span className="text-bone-faint transition-transform duration-500 group-hover:translate-x-1" aria-hidden>
+                  ↗
+                </span>
+              </a>
+            </Reveal>
+          </div>
+          <div className="flex flex-col gap-1.5 md:col-span-4 md:col-start-9">
+            <span className="eyebrow">Studio</span>
+            <a href={`mailto:${studio.email}`} className="font-sans text-[0.95rem] text-bone transition-opacity hover:opacity-60">
+              {studio.email}
+            </a>
+            <a
+              href={`tel:${studio.phone.replace(/\s+/g, "")}`}
+              className="font-sans text-[0.95rem] text-bone-dim transition-opacity hover:opacity-60"
+            >
+              {studio.phone}
+            </a>
+            <div className="mt-4 flex gap-6">
+              {studio.socials.map((s) => (
                 <a
-                  href={`mailto:${studio.email}`}
-                  className="group inline-flex items-baseline gap-4 border-b border-line pb-3 transition-colors hover:border-bone"
+                  key={s.label}
+                  href={s.href}
+                  className="font-sans text-[0.66rem] uppercase tracking-[0.24em] text-bone-faint transition-colors hover:text-bone"
                 >
-                  <span className="display text-[clamp(1.5rem,3.4vw,2.4rem)] text-bone">{ns.ctaLabel}</span>
-                  <span className="text-bone-faint transition-transform duration-500 group-hover:translate-x-1" aria-hidden>
-                    ↗
-                  </span>
+                  {s.label}
                 </a>
-              </Reveal>
-              <Reveal delay={0.18} className="mt-8 flex flex-col gap-1.5">
-                <span className="eyebrow">Studio</span>
-                <a href={`mailto:${studio.email}`} className="font-sans text-[0.95rem] text-bone transition-opacity hover:opacity-60">
-                  {studio.email}
-                </a>
-                <a
-                  href={`tel:${studio.phone.replace(/\s+/g, "")}`}
-                  className="font-sans text-[0.95rem] text-bone-dim transition-opacity hover:opacity-60"
-                >
-                  {studio.phone}
-                </a>
-              </Reveal>
-              <Reveal delay={0.24} className="mt-8">
-                <span className="eyebrow">Connect</span>
-                <div className="mt-3 flex gap-6">
-                  {studio.socials.map((s) => (
-                    <a
-                      key={s.label}
-                      href={s.href}
-                      className="font-sans text-[0.66rem] uppercase tracking-[0.24em] text-bone-faint transition-colors hover:text-bone"
-                    >
-                      {s.label}
-                    </a>
-                  ))}
-                </div>
-              </Reveal>
+              ))}
             </div>
           </div>
         </div>

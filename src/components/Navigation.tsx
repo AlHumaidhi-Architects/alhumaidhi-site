@@ -75,15 +75,27 @@ export function Navigation({ introDone }: { introDone: boolean }) {
             <div className={`flex items-center justify-between px-6 py-6 md:px-12 md:py-8 ${OVER}`}>
               <button
                 onClick={() => goTo("cover")}
-                className="group flex flex-col leading-none"
+                className="group flex items-center leading-none"
                 aria-label={`${studio.name} — top`}
               >
-                <span className="font-sans text-[0.78rem] tracking-[0.4em] transition-opacity group-hover:opacity-70 md:text-[0.84rem]">
-                  {studio.wordmark}
-                </span>
-                <span className="mt-1.5 font-sans text-[0.52rem] tracking-[0.5em] opacity-60 md:text-[0.58rem]">
-                  {studio.wordmarkSub}
-                </span>
+                {studio.logo?.header ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={studio.logo.header}
+                    alt={studio.name}
+                    className="h-7 w-auto select-none object-contain transition-opacity group-hover:opacity-70 md:h-9"
+                    draggable={false}
+                  />
+                ) : (
+                  <span className="flex flex-col">
+                    <span className="font-sans text-[0.78rem] tracking-[0.4em] transition-opacity group-hover:opacity-70 md:text-[0.84rem]">
+                      {studio.wordmark}
+                    </span>
+                    <span className="mt-1.5 font-sans text-[0.52rem] tracking-[0.5em] opacity-60 md:text-[0.58rem]">
+                      {studio.wordmarkSub}
+                    </span>
+                  </span>
+                )}
               </button>
 
               <span className="hidden font-sans text-[0.62rem] tracking-[0.28em] opacity-60 md:block">

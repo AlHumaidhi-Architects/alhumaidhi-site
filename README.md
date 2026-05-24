@@ -117,8 +117,9 @@ including a migration path from the older single-deck shape.
    );
    ```
 
-3. *(Optional, for in-browser image uploads)* In Supabase **Storage**, create a **public**
-   bucket named `site-media`. Without it you can still paste image URLs.
+3. *(For in-browser image uploads)* A **public** Storage bucket named `site-media` is
+   **created automatically** on the first upload (using the service-role key) — no manual
+   step needed. You can always paste an image URL instead.
 
 4. Restart `npm run dev`, open `/admin`, sign in with `ADMIN_PASSWORD`.
 

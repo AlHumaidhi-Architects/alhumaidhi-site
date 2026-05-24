@@ -12,7 +12,23 @@ type RevealProps = {
   duration?: number;
   once?: boolean;
   soft?: boolean;
-  as?: "div" | "li" | "span" | "section" | "header" | "footer" | "article" | "figcaption" | "ul" | "ol" | "dl";
+  as?:
+    | "div"
+    | "li"
+    | "span"
+    | "section"
+    | "header"
+    | "footer"
+    | "article"
+    | "figcaption"
+    | "ul"
+    | "ol"
+    | "dl"
+    | "h1"
+    | "h2"
+    | "h3"
+    | "h4"
+    | "p";
 };
 
 export function Reveal({

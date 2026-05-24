@@ -9,7 +9,14 @@ export function CostEstimate() {
   const c = useSections().costEstimate;
   const columns = c.table?.columns ?? [];
   const rows = c.table?.rows ?? [];
-  const lastCol = columns.length - 1;
+
+  // The "total" row is styled red with a divider above it. It is the row the
+  // editor flags (totalRowIndex) or, failing that, any row whose first cell
+  // begins with "total".
+  const totalIdx =
+    typeof c.totalRowIndex === "number" && c.totalRowIndex >= 0 && c.totalRowIndex < rows.length
+      ? c.totalRowIndex
+      : rows.findIndex((r) => String(r?.[0] ?? "").trim().toLowerCase().startsWith("total"));
 
   return (
     <Section domId="costEstimate" className="overflow-hidden py-28 md:py-44">
@@ -21,14 +28,15 @@ export function CostEstimate() {
           </Reveal>
         </div>
 
-        <div className="mt-14 grid gap-x-16 gap-y-8 md:mt-24 md:grid-cols-12">
+        {/* Title — large, top-left */}
+        <div className="mt-12 grid gap-x-16 gap-y-8 md:mt-20 md:grid-cols-12">
           <div className="md:col-span-8">
             <AnimatedText
               as="h2"
               text={c.headline}
               by="word"
               stagger={0.06}
-              className="display text-balance text-[clamp(2.6rem,8vw,7rem)] text-bone"
+              className="display text-balance text-[clamp(2.6rem,8vw,7rem)] leading-[0.98] text-bone"
             />
           </div>
           <div className="self-end md:col-span-3 md:col-start-10">
@@ -38,18 +46,18 @@ export function CostEstimate() {
           </div>
         </div>
 
-        {/* the estimate, as a clear table */}
-        <Reveal soft className="mt-16 md:mt-24">
+        {/* The estimate, as a clean wide table */}
+        <Reveal soft className="mt-14 md:mt-20">
           <div data-lenis-prevent className="overflow-x-auto [scrollbar-width:thin]">
-            <table className="w-full min-w-[640px] border-collapse text-left">
+            <table className="w-full min-w-[760px] border-collapse text-left">
               <thead>
-                <tr className="border-b border-bone/30">
-                  {columns.map((col, i) => (
+                <tr className="border-b border-bone/25">
+                  {columns.map((col, ci) => (
                     <th
-                      key={i}
-                      className={`whitespace-nowrap py-4 pr-6 font-sans text-[0.58rem] uppercase tracking-[0.24em] text-bone-faint ${
-                        i === lastCol ? "pr-0 text-right" : ""
-                      } ${i === 0 ? "w-12" : ""}`}
+                      key={ci}
+                      className={`whitespace-nowrap pb-5 align-bottom font-sans text-[0.6rem] uppercase tracking-[0.22em] text-bone-faint ${
+                        ci === 0 ? "pr-8" : "px-4 text-right"
+                      } ${ci === columns.length - 1 ? "pr-0" : ""}`}
                     >
                       {col}
                     </th>
@@ -57,41 +65,42 @@ export function CostEstimate() {
                 </tr>
               </thead>
               <tbody>
-                {rows.map((row, ri) => (
-                  <tr key={ri} className="border-b border-line transition-colors hover:bg-bone/[0.03]">
-                    {columns.map((_, ci) => (
-                      <td
-                        key={ci}
-                        className={`py-5 pr-6 align-top font-sans text-[0.95rem] leading-snug ${
-                          ci === lastCol
-                            ? "pr-0 text-right tabular-nums text-bone"
-                            : ci === 0
-                              ? "tabular-nums text-bone-faint"
-                              : "text-bone-dim"
-                        }`}
-                      >
-                        {row[ci] ?? ""}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
+                {rows.map((row, ri) => {
+                  const isTotal = ri === totalIdx;
+                  return (
+                    <tr
+                      key={ri}
+                      className={
+                        isTotal
+                          ? "border-t border-bone/40"
+                          : "border-b border-line transition-colors hover:bg-bone/[0.025]"
+                      }
+                    >
+                      {columns.map((_, ci) => {
+                        const value = row[ci] ?? "";
+                        const base = ci === 0 ? "pr-8" : "px-4 text-right tabular-nums";
+                        const edge = ci === columns.length - 1 ? "pr-0" : "";
+                        const tone = isTotal
+                          ? "text-accent"
+                          : ci === 0
+                            ? "text-bone"
+                            : "text-bone-dim";
+                        const weight = (ci === 0 || isTotal) ? "font-medium" : "font-normal";
+                        return (
+                          <td
+                            key={ci}
+                            className={`align-baseline font-sans leading-snug ${
+                              isTotal ? "pt-6 pb-1 text-[1.05rem] md:text-[1.15rem]" : "py-5 text-[0.95rem]"
+                            } ${base} ${edge} ${tone} ${weight}`}
+                          >
+                            {value}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  );
+                })}
               </tbody>
-              <tfoot>
-                <tr>
-                  <td
-                    colSpan={Math.max(1, columns.length - 1)}
-                    className="pt-7 font-sans text-[0.62rem] uppercase tracking-[0.26em] text-bone"
-                  >
-                    {c.total.k}
-                  </td>
-                  <td className="pt-7 text-right">
-                    <span className="display text-[clamp(1.6rem,3vw,2.6rem)] text-bone">
-                      <span className="mr-2 align-baseline text-[0.5em] tracking-widest text-bone-faint">{c.currency}</span>
-                      {c.total.v}
-                    </span>
-                  </td>
-                </tr>
-              </tfoot>
             </table>
           </div>
         </Reveal>

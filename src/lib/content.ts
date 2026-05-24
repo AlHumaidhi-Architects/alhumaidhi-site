@@ -157,7 +157,9 @@ export type CostEstimateData = {
   note: string;
   currency: string;
   table: CostTable;
-  total: KV;
+  /** Optional index of the row to style as the red "total" row (also auto-detected
+   *  when a row's first cell starts with "total"). */
+  totalRowIndex?: number;
   footnote: string;
 };
 
@@ -228,6 +230,19 @@ export const studio = {
     { label: "LinkedIn", href: "#" },
     { label: "Behance", href: "#" },
   ],
+  /**
+   * Brand artwork. Both are optional — when empty the deck falls back to the
+   * text wordmark above.
+   *   header — the logo shown top-left across the presentation. Use a light /
+   *            white transparent PNG or SVG so it reads on both the ivory
+   *            sections and full-bleed photographs.
+   *   intro  — the animated logo shown on the loading screen. GIF, MP4, WEBM
+   *            or a still image.
+   */
+  logo: {
+    header: "",
+    intro: "",
+  },
 };
 
 export type Studio = typeof studio;
@@ -241,6 +256,8 @@ export type ThemeColors = {
   boneFaint: string;
   clay: string;
   clayDim: string;
+  /** highlight red — used for emphasised words and the cost total row */
+  accent: string;
 };
 
 /** Editorial architecture: warm ivory ground, ink type, colour only in photos. */
@@ -253,6 +270,7 @@ export const theme: ThemeColors = {
   boneFaint: "#8b8472",
   clay: "#9d8d72",
   clayDim: "#786c57",
+  accent: "#c0392b",
 };
 
 /* ── Imagery helper ─────────────────────────────────────────────────────── */
@@ -473,34 +491,35 @@ const majlis: Project = {
 
     costEstimate: {
       eyebrow: "07 — Cost Estimate",
-      headline: "Indicative budget",
-      note: "Order-of-magnitude figures for the concept stage. Refined with the QS at design development.",
+      headline: "Cost Estimation",
+      note: "Indicative construction cost by floor, shown across three build-quality rates. Refined with the QS at design development.",
       currency: "KWD",
       table: {
-        columns: ["Item", "Scope", "Area / Qty", "Rate", "Estimate"],
+        columns: [
+          "Floor",
+          "Indoor Area (sqm)",
+          "Total Cost (500KD/sqm)",
+          "Total Cost (600KD/sqm)",
+          "Total Cost (700KD/sqm)",
+        ],
         rows: [
-          ["01", "Substructure & foundations", "1,240 m²", "180 / m²", "223,200"],
-          ["02", "Concrete superstructure & shell", "1,240 m²", "420 / m²", "520,800"],
-          ["03", "Envelope, glazing & screens", "640 m²", "310 / m²", "198,400"],
-          ["04", "Interior finishes & joinery", "1,240 m²", "260 / m²", "322,400"],
-          ["05", "MEP, cooling & automation", "1 lot", "—", "186,000"],
-          ["06", "Landscape, pool & courtyard", "2,050 m²", "70 / m²", "143,500"],
-          ["07", "Preliminaries & contingency", "12%", "—", "190,800"],
+          ["Ground — Living & Majlis", "640", "320,000", "384,000", "448,000"],
+          ["First — Private Quarters", "420", "210,000", "252,000", "294,000"],
+          ["Roof — Terrace & Mechanical", "180", "90,000", "108,000", "126,000"],
+          ["Total", "1,240", "620,000", "744,000", "868,000"],
         ],
       },
-      total: { k: "Estimated construction cost", v: "1,785,100" },
       footnote: "Excludes land, professional fees, FF&E and statutory charges. ±15% at concept stage.",
     },
 
     nextSteps: {
       eyebrow: "08 — Next Steps",
-      headline: ["Let us build", "something", "that lasts"],
+      headline: ["Next Steps"],
       text: "With the concept agreed, we move into design development — resolving the plan, the details and the budget in parallel. For the full design package, fee proposal or a studio visit, reach the team directly.",
       steps: [
-        { n: "01", title: "Concept sign-off", text: "Confirm the massing, the sequence and the material direction set out in this volume." },
-        { n: "02", title: "Design development", text: "Resolve plans, sections and key details to 1:50, with structure and environment engaged." },
-        { n: "03", title: "Cost & programme", text: "A measured estimate with the quantity surveyor, and a construction programme to completion." },
-        { n: "04", title: "Authority & tender", text: "Municipality submission, then a tender package to selected contractors." },
+        { n: "01", title: "Concept *sign-off*", text: "Confirm the massing, the sequence and the material direction set out in this volume." },
+        { n: "02", title: "Design *development*", text: "Resolve plans, sections and key details to 1:50, with structure and environment engaged." },
+        { n: "03", title: "Cost & *programme*", text: "A measured estimate with the quantity surveyor, and a construction programme to completion." },
       ],
       ctaLabel: "Start the conversation",
     },

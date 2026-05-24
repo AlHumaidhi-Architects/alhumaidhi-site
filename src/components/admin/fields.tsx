@@ -185,18 +185,19 @@ function ImageField({
             onChange={(ev) => onChange(ev.target.value)}
             placeholder="https://… image URL"
           />
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => {
-                if (canUpload) inputRef.current?.click();
-                else setErr("File upload needs Supabase storage — paste an image URL instead.");
-              }}
-              className={addBtn}
-            >
-              {busy ? "Uploading…" : "Upload file"}
-            </button>
+          <div className="flex flex-wrap items-center gap-2">
+            {canUpload ? (
+              <button type="button" disabled={busy} onClick={() => inputRef.current?.click()} className={addBtn}>
+                {busy ? "Uploading…" : "Upload file"}
+              </button>
+            ) : (
+              <span
+                className="rounded-md border border-dashed border-white/10 px-3 py-1.5 text-xs text-[#5f5c57]"
+                title="Connect Supabase storage to enable file uploads"
+              >
+                File upload off — paste a URL above
+              </span>
+            )}
             {url && (
               <button type="button" onClick={() => onChange("")} className={addBtn}>
                 Clear

@@ -122,18 +122,21 @@ export const sectionSchemas: Record<SectionId, GroupField> = {
   ]),
   costEstimate: grp(undefined, [
     e("eyebrow", t("Eyebrow")),
-    e("headline", t("Headline")),
+    e("headline", t("Headline", 'The large title, top-left — e.g. "Cost Estimation"')),
     e("note", ta("Note")),
     e("currency", t("Currency", "e.g. KWD, USD, €")),
-    e("table", { kind: "table", label: "Cost table", help: "Add or rename columns, then fill in each row. The last column is right-aligned as the figure." }),
-    e("total", grp("Total", [e("k", t("Total label", "e.g. Estimated construction cost")), e("v", t("Total value", "e.g. 1,785,100"))])),
+    e("table", {
+      kind: "table",
+      label: "Cost table",
+      help: 'Add or rename columns (Floor, Indoor Area, cost rates…), then fill in each row. The first column is the bold floor name; number columns are right-aligned. Tip: name a row\'s first cell "Total" to render it as the red total row with a divider above.',
+    }),
     e("footnote", ta("Footnote", "Small print under the table — exclusions, accuracy, etc.")),
   ]),
   nextSteps: grp(undefined, [
     e("eyebrow", t("Eyebrow")),
-    e("headline", sl("Headline", "Each entry is stacked on its own line", "Headline line")),
+    e("headline", sl("Headline", 'The large title, top-left. Wrap words in *asterisks* to colour them red — e.g. "Next *Steps*".', "Headline line")),
     e("text", ta("Intro text", undefined, 4)),
-    e("steps", list("Steps", [e("n", t("Number", "e.g. 01")), e("title", t("Title")), e("text", ta("Description"))], { titleKey: "title", addLabel: "Add step" })),
+    e("steps", list("Steps", [e("n", t("Number", "e.g. 01")), e("title", t("Title", "Wrap words in *asterisks* to highlight them red — e.g. Design *development*")), e("text", ta("Description"))], { titleKey: "title", addLabel: "Add step" })),
     e("ctaLabel", t("Call-to-action label", "e.g. Start the conversation")),
   ]),
 };
@@ -155,8 +158,27 @@ export const projectInfoSchema: GroupField = grp(undefined, [
 export const studioSchema: GroupField = grp(undefined, [
   e("name", t("Studio name")),
   e("shortName", t("Short name")),
-  e("wordmark", t("Logo — line 1", "The large word in the logo / preloader")),
-  e("wordmarkSub", t("Logo — line 2", "The small word under it")),
+  e(
+    "logo",
+    grp("Logo & loading screen", [
+      e(
+        "header",
+        img(
+          "Header logo",
+          "Shown top-left across the presentation. Use a white / light transparent PNG or SVG so it reads on both the ivory sections and dark photographs. Leave empty to use the text wordmark below.",
+        ),
+      ),
+      e(
+        "intro",
+        img(
+          "Loading animation",
+          "The animated logo on the loading screen — GIF, MP4 or WEBM (or a still image). Leave empty to use the animated wordmark.",
+        ),
+      ),
+    ]),
+  ),
+  e("wordmark", t("Wordmark — line 1", "The large word used in the logo / loading screen when no logo image is set")),
+  e("wordmarkSub", t("Wordmark — line 2", "The small word under it")),
   e("tagline", t("Tagline")),
   e("established", t("Established", "e.g. EST. 2009")),
   e("city", t("City")),
@@ -177,6 +199,7 @@ export const themeSchema: GroupField = grp(
     e("boneFaint", { kind: "color", label: "Faint text & labels" }),
     e("clay", { kind: "color", label: "Accent colour", help: "Highlights, hover states" }),
     e("clayDim", { kind: "color", label: "Accent — dim" }),
+    e("accent", { kind: "color", label: "Highlight red", help: "Emphasised words (Next Steps) and the cost total row" }),
   ],
   "This palette is shared across every project. It is tuned for a warm ivory ground with ink type — keep strong contrast or the site can become hard to read.",
 );

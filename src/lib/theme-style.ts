@@ -16,5 +16,6 @@ export function themeStyle(t: ThemeColors): CSSProperties {
     "--color-bone-faint": t.boneFaint,
     "--color-clay": t.clay,
     "--color-clay-dim": t.clayDim,
+    "--color-accent": t.accent,
   } as CSSProperties;
 }
