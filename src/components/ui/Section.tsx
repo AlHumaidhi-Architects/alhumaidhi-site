@@ -10,9 +10,15 @@ type SectionProps = {
   /** full viewport height min */
   full?: boolean;
   bg?: "ink" | "ink-2" | "ink-3";
+  /**
+   * Tone of the section behind the fixed header band (its top edge). Drives the
+   * adaptive header colour: "dark" → white logo/menu, "light" → dark. Defaults
+   * to "light" since the editorial sections are warm ivory at the top.
+   */
+  tone?: "dark" | "light";
 };
 
-export function Section({ domId, children, className = "", full = false, bg = "ink" }: SectionProps) {
+export function Section({ domId, children, className = "", full = false, bg = "ink", tone = "light" }: SectionProps) {
   const stops = useStops();
   const index = stops.findIndex((s) => s.domId === domId);
   const bgClass = bg === "ink-2" ? "bg-ink-2" : bg === "ink-3" ? "bg-ink-3" : "bg-ink";
@@ -21,6 +27,7 @@ export function Section({ domId, children, className = "", full = false, bg = "i
       id={domId}
       data-section
       data-section-index={index}
+      data-nav-tone={tone}
       className={`relative ${bgClass} ${full ? "min-h-screen" : ""} ${className}`}
     >
       {children}

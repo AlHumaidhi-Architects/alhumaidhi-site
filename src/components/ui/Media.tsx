@@ -35,6 +35,11 @@ function mediaKind(src: string): "video" | "gif" | "image" {
   return "image";
 }
 
+/** Supabase Storage public URL — serve these raw (the optimizer can blank them). */
+export function isSupabasePublicUrl(src: string): boolean {
+  return /\/storage\/v1\/object\/public\//.test(src || "");
+}
+
 export function Media({
   src,
   alt,
@@ -93,7 +98,7 @@ export function Media({
               fill
               priority={priority}
               sizes={sizes}
-              unoptimized={kind === "gif"}
+              unoptimized={kind === "gif" || isSupabasePublicUrl(src)}
               className={fitClass}
             />
           )}

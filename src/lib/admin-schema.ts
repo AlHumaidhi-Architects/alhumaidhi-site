@@ -106,17 +106,23 @@ export const sectionSchemas: Record<SectionId, GroupField> = {
   ]),
   specifications: grp(undefined, [
     e("eyebrow", t("Eyebrow")),
-    e("headline", t("Headline")),
-    e("note", ta("Note")),
+    e("headline", t("Title", 'The large title, top-left — a floor name or "Area Schedule"')),
+    e("note", ta("Subtitle / floor area", "Shown under the title — e.g. a total area, or a one-line description")),
     e(
       "groups",
       list(
-        "Schedules",
+        "Category columns",
         [
-          e("title", t("Schedule title", "e.g. Structure & envelope")),
-          e("rows", list("Rows", [e("k", t("Label")), e("v", t("Value"))], { titleKey: "k", addLabel: "Add row" })),
+          e("title", t("Category", "Grey column heading — e.g. Family Spaces, Formal Spaces, Service Spaces")),
+          e(
+            "rows",
+            list("Rooms", [e("k", t("Room", "e.g. Family Living")), e("v", t("Area", "e.g. 66 m²"))], {
+              titleKey: "k",
+              addLabel: "Add room",
+            }),
+          ),
         ],
-        { titleKey: "title", addLabel: "Add schedule" },
+        { titleKey: "title", addLabel: "Add category" },
       ),
     ),
   ]),

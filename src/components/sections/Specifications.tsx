@@ -7,6 +7,7 @@ import { useSections } from "@/lib/content-context";
 
 export function Specifications() {
   const s = useSections().specifications;
+  const groups = s.groups ?? [];
 
   return (
     <Section domId="specifications" bg="ink-2" className="overflow-hidden py-28 md:py-44">
@@ -14,37 +15,47 @@ export function Specifications() {
         <div className="flex items-baseline justify-between">
           <SectionTag domId="specifications" />
           <Reveal as="span" className="hidden font-sans text-[0.62rem] tracking-[0.26em] text-bone-faint md:block">
-            {s.groups.length} schedules
+            Built-up areas
           </Reveal>
         </div>
 
-        <div className="mt-14 grid gap-x-16 gap-y-8 md:mt-24 md:grid-cols-12">
-          <div className="md:col-span-8">
-            <AnimatedText
-              as="h2"
-              text={s.headline}
-              by="word"
-              stagger={0.06}
-              className="display text-balance text-[clamp(2.6rem,8vw,7rem)] text-bone"
-            />
-          </div>
-          <div className="self-end md:col-span-3 md:col-start-10">
-            <Reveal delay={0.15}>
-              <p className="copy text-balance">{s.note}</p>
+        {/* Large floor title */}
+        <div className="mt-12 md:mt-20">
+          <AnimatedText
+            as="h2"
+            text={s.headline}
+            by="word"
+            stagger={0.06}
+            className="display text-balance text-[clamp(2.6rem,8vw,7rem)] leading-[0.98] text-bone"
+          />
+          {/* Floor area / subtitle row */}
+          {s.note && (
+            <Reveal>
+              <p className="copy mt-5 max-w-2xl text-[1.05rem] leading-[1.7]">{s.note}</p>
             </Reveal>
-          </div>
+          )}
         </div>
 
-        {/* grouped schedules — quiet ruled definition lists, no cards */}
-        <div className="mt-16 grid gap-x-16 gap-y-16 md:mt-28 md:grid-cols-2 lg:grid-cols-3">
-          {s.groups.map((group, i) => (
+        {/* Thin horizontal divider */}
+        <div className="mt-10 border-t border-bone/25 md:mt-14" />
+
+        {/* Three category columns: room names + areas */}
+        <div className="mt-12 grid gap-x-14 gap-y-14 md:mt-16 md:grid-cols-2 lg:grid-cols-3">
+          {groups.map((group, i) => (
             <Reveal key={i} delay={i * 0.06} soft>
-              <h3 className="font-sans text-[0.66rem] uppercase tracking-[0.28em] text-bone">{group.title}</h3>
-              <dl className="mt-5 border-t border-line">
-                {group.rows.map((row, k) => (
-                  <div key={k} className="flex flex-col gap-1 border-b border-line py-4">
-                    <dt className="font-sans text-[0.58rem] uppercase tracking-[0.24em] text-bone-faint">{row.k}</dt>
-                    <dd className="font-sans text-[0.95rem] leading-snug text-bone-dim">{row.v}</dd>
+              <h3 className="font-sans text-[0.62rem] uppercase tracking-[0.28em] text-bone-faint">{group.title}</h3>
+              <dl className="mt-5">
+                {(group.rows ?? []).map((row, k) => (
+                  <div
+                    key={k}
+                    className="flex items-baseline justify-between gap-6 border-b border-line py-3"
+                  >
+                    <dt className="font-sans text-[0.95rem] font-medium leading-snug text-bone">{row.k}</dt>
+                    {row.v && (
+                      <dd className="shrink-0 font-sans text-[0.95rem] font-medium tabular-nums leading-snug text-bone">
+                        {row.v}
+                      </dd>
+                    )}
                   </div>
                 ))}
               </dl>

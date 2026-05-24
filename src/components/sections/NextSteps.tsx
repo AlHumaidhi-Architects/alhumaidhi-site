@@ -109,6 +109,8 @@ export function NextSteps() {
                 <a
                   key={s.label}
                   href={s.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="font-sans text-[0.66rem] uppercase tracking-[0.24em] text-bone-faint transition-colors hover:text-bone"
                 >
                   {s.label}

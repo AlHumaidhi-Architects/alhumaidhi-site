@@ -36,15 +36,16 @@ export async function ensureMediaBucket(): Promise<{ ok: boolean; error?: string
   try {
     const { data: bucket } = await supabase.storage.getBucket(MEDIA_BUCKET);
     if (bucket) {
-      if (!bucket.public) {
-        await supabase.storage.updateBucket(MEDIA_BUCKET, { public: true });
+      // Ensure it's public (so getPublicUrl works) and raise the size cap for video.
+      if (!bucket.public || (bucket.file_size_limit ?? 0) < 26214400) {
+        await supabase.storage.updateBucket(MEDIA_BUCKET, { public: true, fileSizeLimit: "26214400" });
       }
       return { ok: true };
     }
 
     const { error } = await supabase.storage.createBucket(MEDIA_BUCKET, {
       public: true,
-      fileSizeLimit: "12MB",
+      fileSizeLimit: "26214400", // 25 MB
     });
     // A concurrent request may have created it first — treat "already exists" as success.
     if (error && !/exist/i.test(error.message)) {

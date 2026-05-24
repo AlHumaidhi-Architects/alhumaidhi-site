@@ -170,11 +170,15 @@ function ImageField({
       <div className="flex gap-3">
         <div className="h-20 w-28 shrink-0 overflow-hidden rounded-md border border-white/10 bg-black/40">
           {url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={url} alt="" className="h-full w-full object-cover" />
+            /\.(mp4|webm|mov|m4v|ogv)(\?|$)/i.test(url) ? (
+              <video src={url} muted loop playsInline autoPlay className="h-full w-full object-cover" />
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={url} alt="" className="h-full w-full object-cover" />
+            )
           ) : (
             <div className="flex h-full w-full items-center justify-center text-[0.65rem] text-[#5f5c57]">
-              no image
+              no media
             </div>
           )}
         </div>
@@ -206,7 +210,13 @@ function ImageField({
           </div>
         </div>
       </div>
-      <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={onFile} />
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*,video/mp4,video/webm,video/quicktime"
+        className="hidden"
+        onChange={onFile}
+      />
       {err && <p className="mt-1 text-[0.72rem] text-red-300">{err}</p>}
       <Help>{help}</Help>
     </div>

@@ -10,18 +10,18 @@ const menuVariants = {
   closed: { clipPath: "inset(0% 0% 100% 0%)" },
   open: {
     clipPath: "inset(0% 0% 0% 0%)",
-    transition: { duration: 1.1, ease: EASE_IN_OUT_QUINT, when: "beforeChildren", staggerChildren: 0.07, delayChildren: 0.22 },
+    transition: { duration: 1.1, ease: EASE_IN_OUT_QUINT, when: "beforeChildren", staggerChildren: 0.05, delayChildren: 0.18 },
   },
   exit: {
     clipPath: "inset(0% 0% 100% 0%)",
-    transition: { duration: 0.85, ease: EASE_IN_OUT_QUINT, when: "afterChildren", staggerChildren: 0.035, staggerDirection: -1 },
+    transition: { duration: 0.8, ease: EASE_IN_OUT_QUINT, when: "afterChildren", staggerChildren: 0.03, staggerDirection: -1 },
   },
 };
 
 const itemVariants = {
   closed: { y: "110%" },
-  open: { y: "0%", transition: { duration: 1.05, ease: EASE_OUT_EXPO } },
-  exit: { y: "110%", transition: { duration: 0.45, ease: EASE_OUT_EXPO } },
+  open: { y: "0%", transition: { duration: 1.0, ease: EASE_OUT_EXPO } },
+  exit: { y: "110%", transition: { duration: 0.4, ease: EASE_OUT_EXPO } },
 };
 
 const fadeChild = {
@@ -30,15 +30,13 @@ const fadeChild = {
   exit: { opacity: 0, transition: { duration: 0.3 } },
 };
 
-// Floating UI sits over both ivory sections and full-bleed photographs —
-// mix-blend keeps it legible on either, in the spirit of an architectural plate.
-const OVER = "mix-blend-difference text-[#f7f4ec]";
-
 export function Navigation({ introDone }: { introDone: boolean }) {
   const stops = useStops();
   const studio = useStudio();
   const info = useInfo();
   const [open, setOpen] = useState(false);
+  const [tone, setTone] = useState<"dark" | "light">("dark");
+  const [hidden, setHidden] = useState(false);
   const lenis = useLenis();
 
   useEffect(() => {
@@ -52,6 +50,45 @@ export function Navigation({ introDone }: { introDone: boolean }) {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  // Adaptive colour + fade-after-2-scrolls, driven by scroll position.
+  useEffect(() => {
+    let raf = 0;
+    let lastY = typeof window !== "undefined" ? window.scrollY : 0;
+
+    const update = () => {
+      raf = 0;
+      const y = window.scrollY;
+      const vh = window.innerHeight || 1;
+
+      // Tone: the section sitting under the header band (~64px from top).
+      const stack = document.elementsFromPoint(Math.round(window.innerWidth / 2), 64);
+      const section = stack.find((el) => el instanceof HTMLElement && el.hasAttribute("data-nav-tone")) as
+        | HTMLElement
+        | undefined;
+      if (section) setTone(section.getAttribute("data-nav-tone") === "dark" ? "dark" : "light");
+
+      // Fade out gradually after ~2 viewport scrolls; reveal again on scroll up / near top.
+      const scrollingDown = y > lastY + 1;
+      const scrollingUp = y < lastY - 1;
+      if (y < vh * 0.6) setHidden(false);
+      else if (scrollingDown && y > vh * 2) setHidden(true);
+      else if (scrollingUp) setHidden(false);
+      lastY = y;
+    };
+
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(update);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll, { passive: true });
+    update();
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, []);
+
   const goTo = (domId: string) => {
     setOpen(false);
     window.setTimeout(() => {
@@ -59,6 +96,11 @@ export function Navigation({ introDone }: { introDone: boolean }) {
       else document.getElementById(domId)?.scrollIntoView({ behavior: "smooth" });
     }, 640);
   };
+
+  // Over the open menu (ivory) force dark ink; otherwise follow the section tone.
+  const effectiveTone = open ? "light" : tone;
+  const textColor = effectiveTone === "dark" ? "text-[#f7f4ec]" : "text-[#1a1711]";
+  const headerHidden = hidden && !open;
 
   return (
     <>
@@ -68,11 +110,12 @@ export function Navigation({ introDone }: { introDone: boolean }) {
           <motion.header
             className="fixed inset-x-0 top-0 z-[92]"
             initial={{ opacity: 0, y: -16 }}
-            animate={{ opacity: 1, y: 0 }}
+            animate={{ opacity: headerHidden ? 0 : 1, y: 0 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 1.3, ease: EASE_OUT_EXPO, delay: 0.6 }}
+            transition={{ duration: 0.7, ease: EASE_OUT_EXPO }}
+            style={{ pointerEvents: headerHidden ? "none" : "auto" }}
           >
-            <div className={`flex items-center justify-between px-6 py-6 md:px-12 md:py-8 ${OVER}`}>
+            <div className={`flex items-center justify-between px-6 py-6 transition-colors duration-500 md:px-12 md:py-8 ${textColor}`}>
               <button
                 onClick={() => goTo("cover")}
                 className="group flex items-center leading-none"
@@ -83,7 +126,7 @@ export function Navigation({ introDone }: { introDone: boolean }) {
                   <img
                     src={studio.logo.header}
                     alt={studio.name}
-                    className="h-7 w-auto select-none object-contain transition-opacity group-hover:opacity-70 md:h-9"
+                    className="h-7 w-auto select-none object-contain mix-blend-difference transition-opacity group-hover:opacity-70 md:h-9"
                     draggable={false}
                   />
                 ) : (
@@ -140,10 +183,10 @@ export function Navigation({ introDone }: { introDone: boolean }) {
             exit="exit"
           >
             {/* spacer for header */}
-            <div className="h-[92px] shrink-0 md:h-[112px]" />
+            <div className="h-[88px] shrink-0 md:h-[104px]" />
 
             <div className="flex flex-1 flex-col justify-center overflow-y-auto px-6 md:px-12 lg:px-20">
-              <motion.span variants={fadeChild} className="eyebrow mb-10 md:mb-14">
+              <motion.span variants={fadeChild} className="eyebrow mb-5 md:mb-7">
                 Index — {info.codename}
               </motion.span>
 
@@ -153,15 +196,15 @@ export function Navigation({ introDone }: { introDone: boolean }) {
                     <motion.button
                       variants={itemVariants}
                       onClick={() => goTo(stop.domId)}
-                      className="group flex w-full items-baseline gap-6 py-3 text-left md:gap-10 md:py-4"
+                      className="group flex w-full items-baseline gap-5 py-2 text-left md:gap-8 md:py-2.5"
                     >
-                      <span className="font-sans text-[0.62rem] tabular-nums tracking-[0.3em] text-bone-faint transition-colors group-hover:text-bone md:text-[0.68rem]">
+                      <span className="font-sans text-[0.56rem] tabular-nums tracking-[0.3em] text-bone-faint transition-colors group-hover:text-bone md:text-[0.6rem]">
                         {stop.index}
                       </span>
-                      <span className="display text-[clamp(1.9rem,6.5vw,4.6rem)] text-bone-dim transition-all duration-700 group-hover:translate-x-3 group-hover:text-bone">
+                      <span className="display text-[clamp(1.1rem,3.2vw,2.3rem)] text-bone-dim transition-all duration-700 group-hover:translate-x-2 group-hover:text-bone">
                         {stop.label}
                       </span>
-                      <span className="ml-auto hidden h-px w-0 self-center bg-bone transition-all duration-700 group-hover:w-16 md:block" />
+                      <span className="ml-auto hidden h-px w-0 self-center bg-bone transition-all duration-700 group-hover:w-12 md:block" />
                     </motion.button>
                   </div>
                 ))}
@@ -170,7 +213,7 @@ export function Navigation({ introDone }: { introDone: boolean }) {
 
             <motion.div
               variants={fadeChild}
-              className="flex flex-col gap-6 px-6 pb-10 md:flex-row md:items-end md:justify-between md:px-12 md:pb-12 lg:px-20"
+              className="flex flex-col gap-5 px-6 pb-8 md:flex-row md:items-end md:justify-between md:px-12 md:pb-10 lg:px-20"
             >
               <div className="flex flex-col gap-1.5">
                 <span className="eyebrow">Studio</span>
@@ -184,6 +227,8 @@ export function Navigation({ introDone }: { introDone: boolean }) {
                   <a
                     key={s.label}
                     href={s.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="font-sans text-[0.66rem] tracking-[0.24em] text-bone-faint transition-colors hover:text-bone"
                   >
                     {s.label.toUpperCase()}

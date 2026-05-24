@@ -4,6 +4,7 @@ import Image from "next/image";
 import { motion, useScroll, useTransform } from "motion/react";
 import { useRef } from "react";
 import { Section } from "@/components/ui/Section";
+import { isSupabasePublicUrl } from "@/components/ui/Media";
 import { useInfo, useSections } from "@/lib/content-context";
 import { useIntro } from "@/lib/intro";
 import { EASE_OUT_EXPO } from "@/lib/motion";
@@ -33,7 +34,7 @@ export function Cover() {
   });
 
   return (
-    <Section domId="cover" full className="overflow-hidden">
+    <Section domId="cover" full tone="dark" className="overflow-hidden">
       <div ref={ref} className="relative h-screen w-full">
         {/* ── Full-bleed media ── */}
         <motion.div className="absolute inset-0" style={{ y: imgY }}>
@@ -56,7 +57,15 @@ export function Cover() {
                   <source src={c.media.src} />
                 </video>
               ) : (
-                <Image src={c.media.src} alt={c.media.alt} fill priority sizes="100vw" className="object-cover" />
+                <Image
+                  src={c.media.src}
+                  alt={c.media.alt}
+                  fill
+                  priority
+                  sizes="100vw"
+                  unoptimized={isSupabasePublicUrl(c.media.src)}
+                  className="object-cover"
+                />
               )}
             </motion.div>
           </motion.div>

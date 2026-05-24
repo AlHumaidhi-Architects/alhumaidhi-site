@@ -21,8 +21,11 @@ export async function POST(req: Request) {
   if (!(file instanceof Blob)) {
     return NextResponse.json({ error: "No file received." }, { status: 400 });
   }
-  if (file.size > 12 * 1024 * 1024) {
-    return NextResponse.json({ error: "Image is too large (max 12 MB)." }, { status: 400 });
+  if (file.size > 25 * 1024 * 1024) {
+    return NextResponse.json(
+      { error: "File is too large (max 25 MB). For larger videos, host it elsewhere and paste the URL." },
+      { status: 413 },
+    );
   }
 
   const supabase = getSupabaseAdmin();

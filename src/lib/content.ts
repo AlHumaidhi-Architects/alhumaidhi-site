@@ -458,35 +458,35 @@ const majlis: Project = {
     },
 
     specifications: {
-      eyebrow: "06 — Specifications",
-      headline: "Built honestly, of weight and warmth",
-      note: "Four materials used honestly, and the systems that keep the house cool, quiet and self-sufficient.",
+      eyebrow: "06 — Area Schedule",
+      headline: "Area Schedule",
+      note: "Built-up areas by program — the family, formal and service domains across the house.",
       groups: [
         {
-          title: "Structure & envelope",
+          title: "Family Spaces",
           rows: [
-            { k: "Primary structure", v: "Reinforced concrete frame & shear walls" },
-            { k: "Outer shell", v: "Board-formed concrete, cast against rough-sawn timber" },
-            { k: "Insulation", v: "120 mm rigid mineral wool, ventilated cavity" },
-            { k: "Glazing", v: "Triple-glazed, low-E, bronze-anodised frames" },
+            { k: "Family Living", v: "66 m²" },
+            { k: "Family Kitchen", v: "31 m²" },
+            { k: "Bedrooms (×4)", v: "180 m²" },
+            { k: "Principal Suite", v: "74 m²" },
           ],
         },
         {
-          title: "Materials & finishes",
+          title: "Formal Spaces",
           rows: [
-            { k: "Courtyard floors", v: "Vein-cut Roman travertine, honed" },
-            { k: "Joinery & ceilings", v: "Fumed smoked oak" },
-            { k: "Ironmongery & screens", v: "Oxidised brass, left to patina" },
-            { k: "Interior walls", v: "Hand-applied lime plaster" },
+            { k: "Majlis", v: "58 m²" },
+            { k: "Formal Dining", v: "42 m²" },
+            { k: "Entrance Gallery", v: "26 m²" },
+            { k: "Courtyard", v: "120 m²" },
           ],
         },
         {
-          title: "Environment & services",
+          title: "Service Spaces",
           rows: [
-            { k: "Cooling", v: "Passive courtyard pre-cooling + low-velocity chilled beams" },
-            { k: "Water", v: "Greywater reuse, drip irrigation to native planting" },
-            { k: "Energy", v: "Roof photovoltaic array, 28 kWp" },
-            { k: "Controls", v: "KNX automation, shading & climate scenes" },
+            { k: "Service Kitchen", v: "24 m²" },
+            { k: "Staff Quarters", v: "38 m²" },
+            { k: "Plant & Storage", v: "30 m²" },
+            { k: "Garage", v: "54 m²" },
           ],
         },
       ],
