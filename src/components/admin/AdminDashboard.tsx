@@ -15,8 +15,10 @@ import {
 } from "@/lib/content";
 import { projectInfoSchema, sectionSchemas, studioSchema, themeSchema } from "@/lib/admin-schema";
 import { PanelFields, Toggle, inputBase, type UploadFn } from "@/components/admin/fields";
+import { ProjectsGrid } from "@/components/admin/ProjectsGrid";
 
 type TabKey = "sequence" | "info" | SectionId | "studio" | "theme";
+type View = "dashboard" | "editor";
 
 /* ── id + slug helpers ── */
 function makeId(): string {
@@ -84,6 +86,7 @@ export function AdminDashboard({
     () => initialContent.publishedId || initialContent.projects[0]?.id || "",
   );
   const [tab, setTab] = useState<TabKey>("sequence");
+  const [view, setView] = useState<View>("dashboard");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
 
@@ -150,6 +153,13 @@ export function AdminDashboard({
       projects: c.projects.map((p) => (p.id === id ? { ...p, published: true } : p)),
     }));
 
+  const openEditor = (id: string) => {
+    setActiveId(id);
+    setTab("info");
+    setMessage(null);
+    setView("editor");
+  };
+
   const newProject = () =>
     setContent((c) => {
       const template = structuredClone(defaultContent.projects[0]);
@@ -164,6 +174,7 @@ export function AdminDashboard({
       };
       setActiveId(id);
       setTab("info");
+      setView("editor");
       return { ...c, projects: [...c.projects, project] };
     });
 
@@ -256,15 +267,33 @@ export function AdminDashboard({
   const isHomepage = content.publishedId === activeProject.id;
 
   return (
-    <div className="mx-auto max-w-5xl px-4 pb-28 sm:px-6">
+    <div className="mx-auto max-w-6xl px-4 pb-28 sm:px-6">
       {/* ── Top bar ── */}
       <header className="sticky top-0 z-30 -mx-4 mb-5 flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-white/10 bg-[#0b0b0d]/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6">
+        {view === "editor" && (
+          <button
+            type="button"
+            onClick={() => setView("dashboard")}
+            className="flex items-center gap-1.5 text-xs text-[#a39e94] transition hover:text-[#e8e4db]"
+            title="Back to all projects"
+          >
+            ← Projects
+          </button>
+        )}
         <div className="mr-auto flex items-baseline gap-3">
-          <span className="display text-xl text-[#e8e4db]">Presentation Studio</span>
+          <span className="display text-xl text-[#e8e4db]">
+            {view === "editor" ? activeProject.title || "Untitled project" : "Presentation Studio"}
+          </span>
           <span className="hidden text-[0.7rem] uppercase tracking-[0.2em] text-[#6f6c66] sm:inline">
             {content.studio.name}
           </span>
         </div>
+        {dirty && (
+          <span className="flex items-center gap-1.5 text-[0.7rem] text-amber-300/90" title="You have unsaved changes">
+            <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+            Unsaved
+          </span>
+        )}
         <a href="/" target="_blank" rel="noreferrer" className="text-xs text-[#a39e94] underline-offset-4 transition hover:text-[#e8e4db] hover:underline">
           View site ↗
         </a>
@@ -302,6 +331,22 @@ export function AdminDashboard({
         </div>
       )}
 
+      {/* ══ Dashboard: visual project cards ══ */}
+      {view === "dashboard" && (
+        <ProjectsGrid
+          content={content}
+          onNew={newProject}
+          onEdit={openEditor}
+          onDuplicate={duplicateProject}
+          onDelete={deleteProject}
+          onTogglePublish={setPublished}
+          onSetHomepage={setHomepage}
+        />
+      )}
+
+      {/* ══ Editor: single-project deep edit ══ */}
+      {view === "editor" && (
+        <>
       {/* ── Project switcher ── */}
       <section className="mb-6 rounded-lg border border-white/10 bg-white/[0.02] p-4">
         <div className="flex flex-wrap items-center gap-2">
@@ -503,6 +548,8 @@ export function AdminDashboard({
           </>
         )}
       </div>
+        </>
+      )}
     </div>
   );
 }
