@@ -32,6 +32,39 @@ function deepMerge<T>(base: T, override: unknown): T {
   return out as T;
 }
 
+/* ── One-time, conservative upgrade of retired template sections ───────────
+ *  Saved decks created before the Next Steps / Cost Estimate redesign carry
+ *  the old section shapes. We swap a section for the new default ONLY when it
+ *  still exactly matches the retired template (so any edited content is kept).
+ *  This runs at read time; it sticks permanently once the editor saves again.
+ */
+const RETIRED_COST_COLUMNS = ["Item", "Scope", "Area / Qty", "Rate", "Estimate"];
+const RETIRED_COST_HEADLINE = "Indicative budget";
+const RETIRED_NEXTSTEPS_HEADLINE = ["Let us build", "something", "that lasts"];
+
+function sameStringArray(a: unknown, b: string[]): boolean {
+  return Array.isArray(a) && a.length === b.length && a.every((x, i) => x === b[i]);
+}
+
+function upgradeRetiredSections(project: Project): Project {
+  const def = defaultContent.projects[0];
+  const sections = project.sections;
+  if (!sections) return project;
+  let next = sections;
+
+  const cost = sections.costEstimate;
+  if (cost && cost.headline === RETIRED_COST_HEADLINE && sameStringArray(cost.table?.columns, RETIRED_COST_COLUMNS)) {
+    next = { ...next, costEstimate: structuredClone(def.sections.costEstimate) };
+  }
+
+  const ns = sections.nextSteps;
+  if (ns && sameStringArray(ns.headline, RETIRED_NEXTSTEPS_HEADLINE)) {
+    next = { ...next, nextSteps: structuredClone(def.sections.nextSteps) };
+  }
+
+  return next === sections ? project : { ...project, sections: next };
+}
+
 /**
  * Reconcile saved data into a valid `SiteContent`.
  *
@@ -51,7 +84,7 @@ function reconcile(saved: unknown): SiteContent {
       schemaVersion: SCHEMA_VERSION,
       studio: deepMerge(defaultContent.studio, saved.studio),
       theme: deepMerge(defaultContent.theme, saved.theme),
-      projects: saved.projects as Project[],
+      projects: (saved.projects as Project[]).map(upgradeRetiredSections),
       publishedId:
         typeof saved.publishedId === "string" ? saved.publishedId : defaultContent.publishedId,
     };
