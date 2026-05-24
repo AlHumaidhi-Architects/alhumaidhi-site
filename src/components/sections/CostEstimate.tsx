@@ -18,6 +18,10 @@ export function CostEstimate() {
       ? c.totalRowIndex
       : rows.findIndex((r) => String(r?.[0] ?? "").trim().toLowerCase().startsWith("total"));
 
+  // Backward-compat: older saved content kept the total as a separate {k,v}
+  // rather than an in-table row. Render it as the red total row so nothing is lost.
+  const legacyTotal = totalIdx < 0 && c.total?.v ? c.total : null;
+
   return (
     <Section domId="costEstimate" className="overflow-hidden py-28 md:py-44">
       <div className="mx-auto w-full max-w-[1500px] px-6 md:px-12 lg:px-20">
@@ -101,6 +105,22 @@ export function CostEstimate() {
                   );
                 })}
               </tbody>
+              {legacyTotal && (
+                <tfoot>
+                  <tr className="border-t border-bone/40 text-accent">
+                    <td
+                      colSpan={Math.max(1, columns.length - 1)}
+                      className="pr-8 pt-6 align-baseline font-sans text-[1.05rem] font-medium leading-snug md:text-[1.15rem]"
+                    >
+                      {legacyTotal.k}
+                    </td>
+                    <td className="pt-6 pr-0 text-right align-baseline font-sans text-[1.05rem] font-medium tabular-nums md:text-[1.15rem]">
+                      <span className="mr-1.5 text-[0.7em] tracking-wider text-bone-faint">{c.currency}</span>
+                      {legacyTotal.v}
+                    </td>
+                  </tr>
+                </tfoot>
+              )}
             </table>
           </div>
         </Reveal>

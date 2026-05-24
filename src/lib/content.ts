@@ -160,6 +160,9 @@ export type CostEstimateData = {
   /** Optional index of the row to style as the red "total" row (also auto-detected
    *  when a row's first cell starts with "total"). */
   totalRowIndex?: number;
+  /** Legacy single total — still rendered as the red total row for older saved
+   *  content whose table has no in-table "Total" row. */
+  total?: KV;
   footnote: string;
 };
 
