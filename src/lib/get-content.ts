@@ -4,6 +4,7 @@ import {
   getBySlug,
   getPublished,
   SCHEMA_VERSION,
+  type Media,
   type Project,
   type SiteContent,
 } from "./content";
@@ -73,24 +74,33 @@ function isMedia(v: unknown): v is { src?: string } {
   return typeof v === "object" && v !== null;
 }
 
+/** Build a gallery from any legacy single-media slots that still hold a src. */
+function galleryFromLegacy(...slots: unknown[]): Media[] {
+  return slots
+    .filter((m): m is Media => isMedia(m) && typeof (m as Media).src === "string" && (m as Media).src.length > 0)
+    .map((m) => ({ ...m }));
+}
+
 function upgradeIntroGallery(project: Project): Project {
   const intro = project.sections?.intro;
   if (!intro) return project;
-  const hasGallery = Array.isArray(intro.gallery) && intro.gallery.length > 0;
-  if (hasGallery) return project;
+  if (Array.isArray(intro.gallery) && intro.gallery.length > 0) return project;
 
-  const gallery = [intro.media, intro.secondaryMedia]
-    .filter((m): m is NonNullable<typeof m> => isMedia(m) && typeof m.src === "string" && m.src.length > 0)
-    .map((m) => ({ ...m }));
+  const gallery = galleryFromLegacy(intro.media, intro.secondaryMedia);
+  return { ...project, sections: { ...project.sections, intro: { ...intro, gallery } } };
+}
 
-  return {
-    ...project,
-    sections: { ...project.sections, intro: { ...intro, gallery } },
-  };
+function upgradeGifDiagramGallery(project: Project): Project {
+  const gd = project.sections?.gifDiagram;
+  if (!gd) return project;
+  if (Array.isArray(gd.gallery) && gd.gallery.length > 0) return project;
+
+  const gallery = galleryFromLegacy(gd.media);
+  return { ...project, sections: { ...project.sections, gifDiagram: { ...gd, gallery } } };
 }
 
 function upgradeProject(project: Project): Project {
-  return upgradeIntroGallery(upgradeRetiredSections(project));
+  return upgradeGifDiagramGallery(upgradeIntroGallery(upgradeRetiredSections(project)));
 }
 
 /**

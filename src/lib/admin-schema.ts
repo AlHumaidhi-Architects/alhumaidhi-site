@@ -98,10 +98,18 @@ export const sectionSchemas: Record<SectionId, GroupField> = {
   ]),
   gifDiagram: grp(undefined, [
     e("eyebrow", t("Eyebrow")),
-    e("headline", t("Headline")),
-    e("note", ta("Note")),
-    e("caption", t("Caption", "Shown beneath the diagram")),
-    e("media", mediaGroup("Diagram (GIF or MP4)", { poster: true })),
+    e("headline", t("Section title", "The large title — e.g. How the volume is carved")),
+    e("note", ta("Note", "Short note shown beside the title")),
+    e("body", sl("Concept explanation", "The design narrative — one paragraph per entry", "Paragraph")),
+    e("caption", t("Featured caption", "Shown beneath the first (featured) item")),
+    e(
+      "gallery",
+      mediaListField("Concept media", {
+        poster: true,
+        addLabel: "Add photo / plan / diagram",
+        help: "The first item is the featured diagram; the rest show as supporting photos & plans. Add, remove or reorder freely — each can be JPG, PNG, WEBP, GIF, MP4 or WEBM (upload a file or paste a URL).",
+      }),
+    ),
   ]),
   moodImages: grp(undefined, [
     e("eyebrow", t("Eyebrow")),

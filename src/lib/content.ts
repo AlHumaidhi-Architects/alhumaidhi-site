@@ -111,9 +111,15 @@ export type GifDiagramData = {
   eyebrow: string;
   headline: string;
   note: string;
+  /** concept explanation / design narrative — one paragraph per entry */
+  body: string[];
+  /** caption beneath the featured (first) item */
   caption: string;
-  /** an animated GIF, MP4/WebM, or still — rendered full-bleed */
-  media: Media;
+  /** flexible concept media — first item is featured full-bleed, the rest flow
+   *  as supporting photos / plans / diagrams. Add / remove / reorder in /admin. */
+  gallery: Media[];
+  /** @deprecated legacy single slot — migrated into `gallery` at read time */
+  media?: Media;
 };
 
 export type MoodImagesData = {
@@ -388,11 +394,19 @@ const majlis: Project = {
       eyebrow: "03 — Diagram",
       headline: "How the volume is carved",
       note: "A single move: a courtyard pulled through the centre and leaned toward the sky.",
+      body: [
+        "The concept is one gesture, read three ways. A solid travertine block is hollowed by a single courtyard, which is then leaned toward the southern sky so that low light rakes its inner walls through the day.",
+        "The studies below trace that move — from massing diagram to plan logic to the texture studies that fix the material temperature of the inner court.",
+      ],
       caption: "Massing study — solid to void, dawn to dusk",
-      media: {
-        src: img("1517581177682-a085bb7ffb15"),
-        alt: "Animated massing diagram of the carved courtyard volume",
-      },
+      gallery: [
+        {
+          src: img("1517581177682-a085bb7ffb15"),
+          alt: "Animated massing diagram of the carved courtyard volume",
+        },
+        { src: img("1503387762-592deb58ef4e", 1400), alt: "Concept plan — the courtyard pulled through the centre", ratio: "4 / 3" },
+        { src: img("1524758631624-e2822e304c36", 1200), alt: "Texture study — travertine in raking light", ratio: "4 / 3" },
+      ],
     },
 
     moodImages: {
