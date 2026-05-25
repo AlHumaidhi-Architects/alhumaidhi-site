@@ -161,6 +161,13 @@ export function AdminDashboard({
       return next;
     });
 
+  const clearComments = () =>
+    patchProject(activeProject.id, (p) => {
+      const next = { ...p };
+      delete next.comments;
+      return next;
+    });
+
   const setTitle = (title: string) => patchProject(activeProject.id, (p) => ({ ...p, title }));
   const setSlug = (slug: string) =>
     setContent((c) => ({
@@ -600,11 +607,51 @@ export function AdminDashboard({
                   </button>
                 )}
               </div>
+
+              {activeProject.approval?.signature && (
+                <div className="mt-3">
+                  <p className="mb-1.5 text-[0.66rem] uppercase tracking-[0.16em] text-[#6f6c66]">Signature</p>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={activeProject.approval.signature}
+                    alt={`Signature of ${activeProject.approval.approvedBy}`}
+                    className="h-24 w-auto max-w-full rounded border border-white/10 bg-white object-contain"
+                  />
+                </div>
+              )}
+
               {activeProject.approval && (
                 <p className="mt-2 text-[0.72rem] text-[#6f6c66]">
                   Clearing removes the recorded sign-off. Don&rsquo;t forget to Save.
                 </p>
               )}
+
+              {/* Comments status — recorded from the deck's "Email Comments" button */}
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-3">
+                <div>
+                  <p className="text-[0.7rem] font-medium uppercase tracking-[0.16em] text-[#b89b78]">Comments</p>
+                  {activeProject.comments ? (
+                    <p className="mt-1.5 text-sm text-[#e8e4db]">
+                      Comments drafted
+                      <span className="text-[#6f6c66]">
+                        {" · "}
+                        {formatApprovalDate(activeProject.comments.sentAt)}
+                      </span>
+                    </p>
+                  ) : (
+                    <p className="mt-1.5 text-sm text-[#a39e94]">No comments sent.</p>
+                  )}
+                </div>
+                {activeProject.comments && (
+                  <button
+                    type="button"
+                    onClick={clearComments}
+                    className="rounded-md border border-white/10 px-3 py-1.5 text-xs text-red-300 transition hover:border-red-400/40 hover:bg-red-500/10"
+                  >
+                    Clear comments
+                  </button>
+                )}
+              </div>
             </div>
 
             <PanelFields

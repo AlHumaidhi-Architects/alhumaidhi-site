@@ -121,14 +121,21 @@ function ProjectCard({
         >
           {status.label}
         </span>
-        {project.approval && (
+        {project.approval ? (
           <span
             className="absolute right-3 top-3 rounded-full border border-emerald-400/40 bg-emerald-500/15 px-2.5 py-1 text-[0.66rem] tracking-wide text-emerald-200 backdrop-blur"
             title={`Approved by ${project.approval.approvedBy}`}
           >
             ✓ Approved
           </span>
-        )}
+        ) : project.comments ? (
+          <span
+            className="absolute right-3 top-3 rounded-full border border-red-400/40 bg-red-500/15 px-2.5 py-1 text-[0.66rem] tracking-wide text-red-200 backdrop-blur"
+            title="Client drafted comments"
+          >
+            With Comments
+          </span>
+        ) : null}
         <span className="absolute inset-x-0 bottom-0 flex items-center justify-center bg-gradient-to-t from-black/70 to-transparent py-2 text-xs font-medium text-[#e8e4db] opacity-0 transition group-hover:opacity-100">
           Edit project →
         </span>
