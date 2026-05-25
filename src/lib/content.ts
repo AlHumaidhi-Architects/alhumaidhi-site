@@ -224,10 +224,18 @@ export type ProjectInfo = {
 
 /** Client sign-off recorded from the public deck's "Approved" button. */
 export type ProjectApproval = {
-  /** the client's typed name / signature */
+  /** the client's typed full name */
   approvedBy: string;
   /** ISO timestamp recorded on the server when approval was confirmed */
   approvedAt: string;
+  /** hand-drawn signature, stored as a PNG data URL */
+  signature?: string;
+};
+
+/** Recorded when the client uses the "Email Comments" button. */
+export type ProjectComments = {
+  /** ISO timestamp of the most recent time comments were drafted */
+  sentAt: string;
 };
 
 export type Project = {
@@ -243,6 +251,8 @@ export type Project = {
   sections: SectionData;
   /** present once the client has approved this presentation */
   approval?: ProjectApproval;
+  /** present once the client has drafted comments via "Email Comments" */
+  comments?: ProjectComments;
 };
 
 /* ── Global brand + theme ───────────────────────────────────────────────── */

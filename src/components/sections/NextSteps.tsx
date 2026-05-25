@@ -1,11 +1,12 @@
 "use client";
 
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { useRouter } from "next/navigation";
 import { Section, SectionTag } from "@/components/ui/Section";
 import { Reveal } from "@/components/ui/Reveal";
 import { Accent } from "@/components/ui/Accent";
+import { SignaturePad, type SignaturePadHandle } from "@/components/ui/SignaturePad";
 import { useLenis } from "lenis/react";
 import { useInfo, useProject, useSections, useStudio, useYear } from "@/lib/content-context";
 import type { ProjectApproval } from "@/lib/content";
@@ -42,6 +43,8 @@ export function NextSteps() {
   const [name, setName] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sigEmpty, setSigEmpty] = useState(true);
+  const sigRef = useRef<SignaturePadHandle>(null);
 
   // Pause the smooth scroll while the approval dialog is open.
   useEffect(() => {
@@ -72,6 +75,13 @@ export function NextSteps() {
       `Client: ${info.client}\n` +
       `Project Link: ${projectUrl}\n\n` +
       `Comments:\n\n`;
+    // Best-effort: flag the project as "With Comments" for the studio. Never
+    // block opening the draft if this fails (e.g. backend not connected).
+    fetch("/api/approve", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ kind: "comments", id: project.id, slug: project.slug }),
+    }).catch(() => {});
     window.location.href = `mailto:${encodeURIComponent(recipient)}?subject=${encodeURIComponent(
       subject,
     )}&body=${encodeURIComponent(body)}`;
@@ -80,22 +90,33 @@ export function NextSteps() {
   function openApproval() {
     setName(approval?.approvedBy ?? "");
     setError(null);
+    setSigEmpty(true);
     setModalOpen(true);
+  }
+
+  function clearSignature() {
+    sigRef.current?.clear();
+    setSigEmpty(true);
   }
 
   async function submitApproval() {
     const trimmed = name.trim();
     if (!trimmed) {
-      setError("Please enter your name to confirm.");
+      setError("Please enter your full name to confirm.");
       return;
     }
+    if (!sigRef.current || sigRef.current.isEmpty()) {
+      setError("Please add your signature to confirm.");
+      return;
+    }
+    const signature = sigRef.current.toDataURL();
     setSubmitting(true);
     setError(null);
     try {
       const res = await fetch("/api/approve", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: project.id, slug: project.slug, name: trimmed }),
+        body: JSON.stringify({ kind: "approve", id: project.id, slug: project.slug, name: trimmed, signature }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || "Couldn't save your approval.");
@@ -180,6 +201,17 @@ export function NextSteps() {
                   {approval.approvedBy}
                 </p>
                 <p className="eyebrow mt-2.5">Approved on {formatApprovalDate(approval.approvedAt)}</p>
+                {approval.signature && (
+                  <figure className="mt-5">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={approval.signature}
+                      alt={`Signature of ${approval.approvedBy}`}
+                      className="h-24 w-auto max-w-full rounded-sm border border-line bg-white object-contain"
+                    />
+                    <figcaption className="eyebrow mt-2">Signature</figcaption>
+                  </figure>
+                )}
                 <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center">
                   <button type="button" onClick={emailComments} className={secondaryBtn}>
                     Email Comments
@@ -271,7 +303,8 @@ export function NextSteps() {
             aria-label="Confirm approval"
           >
             <motion.div
-              className="w-full max-w-md bg-ink p-7 shadow-2xl md:p-9"
+              data-lenis-prevent
+              className="max-h-[90vh] w-full max-w-md overflow-y-auto bg-ink p-7 shadow-2xl md:p-9"
               initial={{ opacity: 0, y: 24, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 16, scale: 0.99 }}
@@ -283,23 +316,49 @@ export function NextSteps() {
                 Approve {info.name}
               </h3>
               <p className="copy mt-3 text-[0.95rem] leading-[1.7]">
-                By approving, you confirm you have reviewed this presentation. Your name and today&rsquo;s date
-                will be recorded with the project.
+                By approving, you confirm you have reviewed this presentation. Your name, signature and
+                today&rsquo;s date are recorded with the project.
               </p>
 
               <label className="mt-7 block">
-                <span className="eyebrow">Your name / signature</span>
+                <span className="eyebrow">Your full name</span>
                 <input
                   autoFocus
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") submitApproval();
-                  }}
                   placeholder="Full name"
                   className="mt-3 w-full border-b border-line bg-transparent pb-2.5 font-sans text-[1.05rem] text-bone outline-none transition-colors placeholder:text-bone-faint focus:border-bone"
                 />
               </label>
+
+              <div className="mt-6">
+                <div className="flex items-baseline justify-between">
+                  <span className="eyebrow">Your signature</span>
+                  <button
+                    type="button"
+                    onClick={clearSignature}
+                    disabled={sigEmpty}
+                    className="font-sans text-[0.62rem] uppercase tracking-[0.22em] text-bone-faint transition-colors enabled:hover:text-bone disabled:opacity-40"
+                  >
+                    Clear
+                  </button>
+                </div>
+                <div className="relative mt-3 rounded-sm border border-line bg-white">
+                  <SignaturePad ref={sigRef} onEmptyChange={setSigEmpty} className="h-44 rounded-sm" />
+                  {sigEmpty && (
+                    <span className="pointer-events-none absolute inset-0 flex items-center justify-center font-sans text-[0.72rem] uppercase tracking-[0.22em] text-bone-faint/70">
+                      Sign here
+                    </span>
+                  )}
+                </div>
+                <p className="mt-2 font-sans text-[0.72rem] leading-relaxed text-bone-faint">
+                  Draw your signature above using your mouse, trackpad or finger.
+                </p>
+              </div>
+
+              <p className="mt-5 font-sans text-[0.72rem] text-bone-faint">
+                Approval date: {formatApprovalDate(new Date().toISOString())} — recorded automatically.
+              </p>
 
               {error && <p className="mt-3 font-sans text-[0.8rem] text-accent">{error}</p>}
 
