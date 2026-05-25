@@ -1,23 +1,113 @@
 "use client";
 
-import { Fragment } from "react";
+import { Fragment, useEffect, useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
+import { useRouter } from "next/navigation";
 import { Section, SectionTag } from "@/components/ui/Section";
 import { Reveal } from "@/components/ui/Reveal";
 import { Accent } from "@/components/ui/Accent";
 import { useLenis } from "lenis/react";
-import { useInfo, useSections, useStudio, useYear } from "@/lib/content-context";
+import { useInfo, useProject, useSections, useStudio, useYear } from "@/lib/content-context";
+import type { ProjectApproval } from "@/lib/content";
+import { EASE_OUT_EXPO } from "@/lib/motion";
+
+const MONTHS = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+
+/** Format an ISO timestamp deterministically (UTC) so SSR and the client agree. */
+function formatApprovalDate(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+}
+
+const primaryBtn =
+  "inline-flex items-center justify-center gap-2.5 bg-bone px-9 py-4 font-sans text-[0.7rem] uppercase tracking-[0.26em] text-ink transition-colors duration-300 enabled:hover:bg-bone-dim disabled:opacity-50";
+const secondaryBtn =
+  "group inline-flex items-center justify-center gap-2.5 border border-line px-9 py-4 font-sans text-[0.7rem] uppercase tracking-[0.26em] text-bone transition-colors duration-300 hover:border-bone";
 
 export function NextSteps() {
   const ns = useSections().nextSteps;
   const studio = useStudio();
   const info = useInfo();
+  const project = useProject();
   const year = useYear();
   const lenis = useLenis();
+  const router = useRouter();
+
+  const [approval, setApproval] = useState<ProjectApproval | undefined>(project.approval);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Pause the smooth scroll while the approval dialog is open.
+  useEffect(() => {
+    if (!modalOpen) return;
+    lenis?.stop();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setModalOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      lenis?.start();
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [modalOpen, lenis]);
 
   const toTop = () => {
     if (lenis) lenis.scrollTo(0, { duration: 2.2 });
     else window.scrollTo({ top: 0, behavior: "smooth" });
   };
+
+  function emailComments() {
+    const recipient = (info.commentsEmail || "").trim() || studio.email;
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const projectUrl = `${origin}/p/${project.slug}`;
+    const subject = `Project Comments — ${info.name}`;
+    const body =
+      `Project: ${info.name}\n` +
+      `Client: ${info.client}\n` +
+      `Project Link: ${projectUrl}\n\n` +
+      `Comments:\n\n`;
+    window.location.href = `mailto:${encodeURIComponent(recipient)}?subject=${encodeURIComponent(
+      subject,
+    )}&body=${encodeURIComponent(body)}`;
+  }
+
+  function openApproval() {
+    setName(approval?.approvedBy ?? "");
+    setError(null);
+    setModalOpen(true);
+  }
+
+  async function submitApproval() {
+    const trimmed = name.trim();
+    if (!trimmed) {
+      setError("Please enter your name to confirm.");
+      return;
+    }
+    setSubmitting(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/approve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: project.id, slug: project.slug, name: trimmed }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || "Couldn't save your approval.");
+      setApproval(data.approval as ProjectApproval);
+      setModalOpen(false);
+      router.refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Couldn't save your approval.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   const steps = ns.steps ?? [];
 
@@ -78,20 +168,46 @@ export function NextSteps() {
           </div>
         )}
 
-        {/* CTA + contact */}
+        {/* Final action area + contact */}
         <div className="mt-auto grid gap-10 pt-20 md:grid-cols-12 md:pt-28">
           <div className="md:col-span-7">
-            <Reveal>
-              <a
-                href={`mailto:${studio.email}`}
-                className="group inline-flex items-baseline gap-4 border-b border-line pb-3 transition-colors hover:border-bone"
-              >
-                <span className="display text-[clamp(1.5rem,3.4vw,2.4rem)] text-bone">{ns.ctaLabel}</span>
-                <span className="text-bone-faint transition-transform duration-500 group-hover:translate-x-1" aria-hidden>
-                  ↗
+            {approval ? (
+              <Reveal>
+                <span className="eyebrow flex items-center gap-2">
+                  <span aria-hidden>✓</span> Approved
                 </span>
-              </a>
-            </Reveal>
+                <p className="display mt-4 text-[clamp(1.7rem,3.6vw,2.6rem)] leading-[1.05] text-bone">
+                  {approval.approvedBy}
+                </p>
+                <p className="eyebrow mt-2.5">Approved on {formatApprovalDate(approval.approvedAt)}</p>
+                <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <button type="button" onClick={emailComments} className={secondaryBtn}>
+                    Email Comments
+                    <span className="text-bone-faint transition-transform duration-500 group-hover:translate-x-1" aria-hidden>
+                      ↗
+                    </span>
+                  </button>
+                </div>
+              </Reveal>
+            ) : (
+              <Reveal>
+                <span className="eyebrow">Your decision</span>
+                <p className="copy mt-3 max-w-md text-[0.98rem] leading-[1.7]">
+                  Approve the proposal as presented, or send us your comments.
+                </p>
+                <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <button type="button" onClick={openApproval} className={primaryBtn}>
+                    Approved
+                  </button>
+                  <button type="button" onClick={emailComments} className={secondaryBtn}>
+                    Email Comments
+                    <span className="text-bone-faint transition-transform duration-500 group-hover:translate-x-1" aria-hidden>
+                      ↗
+                    </span>
+                  </button>
+                </div>
+              </Reveal>
+            )}
           </div>
           <div className="flex flex-col gap-1.5 md:col-span-4 md:col-start-9">
             <span className="eyebrow">Studio</span>
@@ -139,6 +255,76 @@ export function NextSteps() {
           </button>
         </div>
       </footer>
+
+      {/* ── Approval dialog ── */}
+      <AnimatePresence>
+        {modalOpen && (
+          <motion.div
+            className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 p-5 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3, ease: EASE_OUT_EXPO }}
+            onClick={() => !submitting && setModalOpen(false)}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Confirm approval"
+          >
+            <motion.div
+              className="w-full max-w-md bg-ink p-7 shadow-2xl md:p-9"
+              initial={{ opacity: 0, y: 24, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 16, scale: 0.99 }}
+              transition={{ duration: 0.4, ease: EASE_OUT_EXPO }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <span className="eyebrow">Confirm approval</span>
+              <h3 className="display mt-3 text-[clamp(1.6rem,4vw,2.2rem)] leading-[1.05] text-bone">
+                Approve {info.name}
+              </h3>
+              <p className="copy mt-3 text-[0.95rem] leading-[1.7]">
+                By approving, you confirm you have reviewed this presentation. Your name and today&rsquo;s date
+                will be recorded with the project.
+              </p>
+
+              <label className="mt-7 block">
+                <span className="eyebrow">Your name / signature</span>
+                <input
+                  autoFocus
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") submitApproval();
+                  }}
+                  placeholder="Full name"
+                  className="mt-3 w-full border-b border-line bg-transparent pb-2.5 font-sans text-[1.05rem] text-bone outline-none transition-colors placeholder:text-bone-faint focus:border-bone"
+                />
+              </label>
+
+              {error && <p className="mt-3 font-sans text-[0.8rem] text-accent">{error}</p>}
+
+              <div className="mt-8 flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setModalOpen(false)}
+                  disabled={submitting}
+                  className="px-4 py-2.5 font-sans text-[0.7rem] uppercase tracking-[0.22em] text-bone-faint transition-colors hover:text-bone disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={submitApproval}
+                  disabled={submitting}
+                  className={primaryBtn}
+                >
+                  {submitting ? "Saving…" : "Confirm approval"}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </Section>
   );
 }
