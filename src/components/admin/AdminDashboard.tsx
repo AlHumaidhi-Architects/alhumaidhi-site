@@ -35,6 +35,17 @@ function uniqueSlug(projects: Project[], base: string, excludeId?: string): stri
   return `${root}-${n}`;
 }
 
+const MONTHS = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+/** Deterministic (UTC) date formatting, matching the public deck. */
+function formatApprovalDate(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+}
+
 function TabButton({
   active,
   muted,
@@ -142,6 +153,13 @@ export function AdminDashboard({
       projects: c.projects.map((p) => (p.id === activeProject.id ? { ...p, updatedAt: Date.now() } : p)),
     }));
   const setTheme = (value: any) => setContent((c) => ({ ...c, theme: value }));
+
+  const clearApproval = () =>
+    patchProject(activeProject.id, (p) => {
+      const next = { ...p };
+      delete next.approval;
+      return next;
+    });
 
   const setTitle = (title: string) => patchProject(activeProject.id, (p) => ({ ...p, title }));
   const setSlug = (slug: string) =>
@@ -552,6 +570,43 @@ export function AdminDashboard({
         {tab === "info" && (
           <>
             <PanelHeading title="Project info" desc="Names, dates and labels used across this deck." />
+
+            {/* Client approval status — recorded from the deck's "Approved" button */}
+            <div className="rounded-lg border border-white/10 bg-white/[0.02] p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-[0.7rem] font-medium uppercase tracking-[0.16em] text-[#b89b78]">
+                    Client approval
+                  </p>
+                  {activeProject.approval ? (
+                    <p className="mt-1.5 text-sm text-[#e8e4db]">
+                      Approved by <span className="font-semibold">{activeProject.approval.approvedBy}</span>
+                      <span className="text-[#6f6c66]">
+                        {" · "}
+                        {formatApprovalDate(activeProject.approval.approvedAt)}
+                      </span>
+                    </p>
+                  ) : (
+                    <p className="mt-1.5 text-sm text-[#a39e94]">Not approved yet.</p>
+                  )}
+                </div>
+                {activeProject.approval && (
+                  <button
+                    type="button"
+                    onClick={clearApproval}
+                    className="rounded-md border border-white/10 px-3 py-1.5 text-xs text-red-300 transition hover:border-red-400/40 hover:bg-red-500/10"
+                  >
+                    Clear approval
+                  </button>
+                )}
+              </div>
+              {activeProject.approval && (
+                <p className="mt-2 text-[0.72rem] text-[#6f6c66]">
+                  Clearing removes the recorded sign-off. Don&rsquo;t forget to Save.
+                </p>
+              )}
+            </div>
+
             <PanelFields
               fields={projectInfoSchema.fields}
               value={activeProject.info}

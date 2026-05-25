@@ -6,6 +6,7 @@ import { useRef } from "react";
 import { clipInner, clipWrap, inViewSoft } from "@/lib/motion";
 import { bustCache, isSupabasePublicUrl, mediaKind, videoMime } from "@/lib/media-url";
 import { useMediaVersion } from "@/lib/content-context";
+import { useLightbox } from "@/components/ui/Lightbox";
 
 export { isSupabasePublicUrl, videoMime } from "@/lib/media-url";
 
@@ -28,6 +29,8 @@ type MediaProps = {
   tint?: number;
   /** poster frame for videos */
   poster?: string;
+  /** click-to-zoom into the full-screen lightbox (default true) */
+  zoomable?: boolean;
   children?: React.ReactNode;
 };
 
@@ -44,9 +47,11 @@ export function Media({
   grayscale = false,
   tint = 0,
   poster,
+  zoomable = true,
   children,
 }: MediaProps) {
   const ref = useRef<HTMLDivElement>(null);
+  const { open } = useLightbox();
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ["start end", "end start"],
@@ -66,15 +71,34 @@ export function Media({
   const useReveal = reveal && !uploaded;
   const fitClass = `object-cover ${grayscale ? "grayscale" : ""} ${imgClassName}`;
 
+  const canZoom = zoomable && !!url;
+  const handleZoom = () => {
+    if (canZoom) open({ src: url, alt, poster: posterUrl });
+  };
+
   return (
     <motion.div
       ref={ref}
       style={style}
-      className={`relative overflow-hidden bg-ink-3 ${className}`}
+      className={`relative overflow-hidden bg-ink-3 ${canZoom ? "cursor-zoom-in" : ""} ${className}`}
       variants={useReveal ? clipWrap : undefined}
       initial={useReveal ? "hidden" : false}
       whileInView={useReveal ? "visible" : undefined}
       viewport={useReveal ? inViewSoft : undefined}
+      onClick={canZoom ? handleZoom : undefined}
+      role={canZoom ? "button" : undefined}
+      tabIndex={canZoom ? 0 : undefined}
+      aria-label={canZoom && alt ? `Enlarge: ${alt}` : undefined}
+      onKeyDown={
+        canZoom
+          ? (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                handleZoom();
+              }
+            }
+          : undefined
+      }
     >
       <motion.div className="absolute inset-0 will-change-transform" variants={useReveal ? clipInner : undefined}>
         <motion.div

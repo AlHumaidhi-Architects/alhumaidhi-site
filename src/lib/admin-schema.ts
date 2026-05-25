@@ -177,7 +177,6 @@ export const sectionSchemas: Record<SectionId, GroupField> = {
     e("headline", sl("Headline", 'The large title, top-left. Wrap words in *asterisks* to colour them red — e.g. "Next *Steps*".', "Headline line")),
     e("text", ta("Intro text", undefined, 4)),
     e("steps", list("Steps", [e("n", t("Number", "e.g. 01")), e("title", t("Title", "Wrap words in *asterisks* to highlight them red — e.g. Design *development*")), e("text", ta("Description"))], { titleKey: "title", addLabel: "Add step" })),
-    e("ctaLabel", t("Call-to-action label", "e.g. Start the conversation")),
   ]),
 };
 
@@ -199,6 +198,13 @@ export const projectInfoSchema: GroupField = grp(undefined, [
     accept: ".pdf,application/pdf",
     help: 'Upload a PDF (or paste a URL). Shows as a “Download Plans” button in the Intro “At a glance” block. Leave empty to hide the button.',
   }),
+  e(
+    "commentsEmail",
+    t(
+      "Approval / Comments Email",
+      'Where the deck’s “Email Comments” button addresses its draft. Leave empty to use the studio email. Carried over when you duplicate a project.',
+    ),
+  ),
 ]);
 
 export const studioSchema: GroupField = grp(undefined, [

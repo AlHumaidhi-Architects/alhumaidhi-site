@@ -184,7 +184,8 @@ export type NextStepsData = {
   headline: string[];
   text: string;
   steps: NextStep[];
-  ctaLabel: string;
+  /** @deprecated the closing CTA is now the Approved / Email Comments actions */
+  ctaLabel?: string;
 };
 
 export type SectionData = {
@@ -216,6 +217,17 @@ export type ProjectInfo = {
   /** optional PDF (Supabase upload or pasted URL) — shows a "Download Plans"
    *  button in the Intro when set */
   plansPdf?: string;
+  /** where the "Email Comments" button addresses its draft. Falls back to the
+   *  studio email when empty. Carried through when a project is duplicated. */
+  commentsEmail?: string;
+};
+
+/** Client sign-off recorded from the public deck's "Approved" button. */
+export type ProjectApproval = {
+  /** the client's typed name / signature */
+  approvedBy: string;
+  /** ISO timestamp recorded on the server when approval was confirmed */
+  approvedAt: string;
 };
 
 export type Project = {
@@ -229,6 +241,8 @@ export type Project = {
   info: ProjectInfo;
   sequence: SequenceItem[];
   sections: SectionData;
+  /** present once the client has approved this presentation */
+  approval?: ProjectApproval;
 };
 
 /* ── Global brand + theme ───────────────────────────────────────────────── */
@@ -544,7 +558,6 @@ const majlis: Project = {
         { n: "02", title: "Design *development*", text: "Resolve plans, sections and key details to 1:50, with structure and environment engaged." },
         { n: "03", title: "Cost & *programme*", text: "A measured estimate with the quantity surveyor, and a construction programme to completion." },
       ],
-      ctaLabel: "Start the conversation",
     },
   },
 };

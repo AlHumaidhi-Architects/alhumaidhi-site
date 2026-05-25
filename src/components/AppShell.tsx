@@ -6,6 +6,7 @@ import { Preloader } from "./Preloader";
 import { Cursor } from "./Cursor";
 import { Navigation } from "./Navigation";
 import { ScrollProgress } from "./ScrollProgress";
+import { LightboxProvider } from "./ui/Lightbox";
 import { IntroContext } from "@/lib/intro";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -22,11 +23,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           touchMultiplier: 1.4,
         }}
       >
-        <Cursor />
-        <Navigation introDone={introDone} />
-        <ScrollProgress introDone={introDone} />
-        <main id="top">{children}</main>
-        <Preloader onDone={() => setIntroDone(true)} />
+        <LightboxProvider>
+          <Cursor />
+          <Navigation introDone={introDone} />
+          <ScrollProgress introDone={introDone} />
+          <main id="top">{children}</main>
+          <Preloader onDone={() => setIntroDone(true)} />
+        </LightboxProvider>
       </ReactLenis>
     </IntroContext.Provider>
   );
